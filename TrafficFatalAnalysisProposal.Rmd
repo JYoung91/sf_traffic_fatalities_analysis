@@ -1,0 +1,53 @@
+---
+output: html_document
+---
+# Capstone Project Proposal: Traffic Fatalities in SF
+
+## What problem do you want to solve?
+
+I want to reduce traffic injuries and fatalities in SF by visually showcasing the data points on a map. The summary of data would be broken down into zip codes. I also want to determine which areas are projected to continue in an upward trend in incidents given the data from previous years (2016 is the most recent observed year.
+
+## Who is your client and why do they care about this problem? In other words, what will your client DO or DECIDE based on your analysis that they wouldn't have otherwise?
+
+My client is primarily the US Department of Transportation to consider all the factors into road safety in "hot" metropolitan areas. This would give them organized data at their disposal to better allocate resources in driver and pedestrian safety.
+
+My secondary client(s) are driverless car engineers who would benefit from more pre-driving data to ensure a greater level of safety as they collect more data in more trekked areas. By marking "hot" zones for car crashes, they may benefit from reducing unknown variables by devising more appropriate actions for the driverless car to take.  
+
+## What data are you going to use for this? How will you acquire this data?
+
+I am using raw traffic data collected by the USDOT. It includes data files for the accident, vehicle, and person(s) The data files are in csv format and will be imported into RStudio to run analysis.
+
+## In brief, outline your approach to solving this problem (knowing that this might change later).
+
+The observation of data variables specifically for the USDOT will pertain to a combination of vehicle and person(s) variables. These variables will be mixed and matched to determine if there is statistical significance.
+
+Data that is for driverless cars will pertain more to vehicle and accident conditions.
+
+
+### Dataset(s) Details Needed:
+1. __Accident Dataset__
+* Incident coordinates
+* Time & date (time of day, day of week, month?)
+* Number of people involved (FATALS)
+* Accident type (ACC_TYPE) 
+* Conditions (weather)
+* Light Condition (LGT_COND)
+* Manner of Collision (MAN_COLL)
+
+2. __Vehicle Dataset__
+* Vehicle type
+* Travel Speed (travel_sp)
+* Most Harmful Event (M_HARM) - the event that resulted in the most severe injury, if no injury, then the greatest property damage
+* Previous Recorded Crashes (PREV_ACC)
+* Attempted Avoidance Maneuver (P_CRASH3)
+* Speed Limit (VSPD_LIM)
+
+3. __Person Dataset__
+* Injuries/fatalities (HARM_EV)
+* Person Type (PER_TYP) - role of person involved in the crash
+* Age
+* Sex
+* Restraint System/Helmet Use (REST_USE)
+* Alcohol/Drugs
+
+
