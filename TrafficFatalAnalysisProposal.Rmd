@@ -1,13 +1,13 @@
 ---
 output: html_document
 ---
-# Capstone Project Proposal: Traffic Fatalities in SF
+# Capstone Project Proposal: DUI Related Arrests & Fatalities in SF
 
 ## What problem do you want to solve?
 
-Living in and frequently driving in San Francisco, I understand the risks associated with operating a vehicle in a busy metropolitan city. There are many variables that can lead to traffic incidents but one that unacceptably and unfortunately trumps all others is drunk driving. 
+Living in and frequently driving in San Francisco, I understand the risks associated with operating a vehicle in a busy metropolitan city. There are many variables that can increase the likelihood and/or lead to traffic incidents but one that unacceptably and unfortunately trumps all others is drunk driving. 
 
-I want to further dissect DUI related data to reduce traffic injuries and fatalities in San Francisco. Not only do I hope to highlight incidents during busy drinking hours/days of the week, but also particular hot areas with bars and clubs. My prediction is that increased incidents would fall on Friday and Saturday between 5 pm and 3 am (the following morning). 
+I want to dissect DUI related data to reduce cases of arrests and incidents in San Francisco. Not only do I hope to highlight incidents during busy drinking hours/days of the week, but also particular hot areas with bars and clubs. My rough prediction is that increased incidents would fall on Friday and Saturday between 5 pm and 3 am (the following morning).
 
 By visually showcasing the data points on a map, I hope to prove my predictions and find recurring patterns over time. The summary of data would be broken down into the major zip codes to segment the data. I also want to highlight the areas with increased incidents over time to determine a call to action. 
 
@@ -15,7 +15,7 @@ By visually showcasing the data points on a map, I hope to prove my predictions 
 
 My clients are primarily ride-sharing companies such as Uber and Lyft. While a UC Davis study had found that there is a 14% decrease in DUI arrests in the San Francisco-Oakland area in the two years after ride sharing began in 2010, the issue should continue to be relevant in keeping the streets safe for everyone. With possible implications from pending legislation like SB 905, there may be an increase in drunk driving cases. If passed, it would mean that "last call" for buying alcoholic beverages is extended to 4 pm. 
 
-Uber and Lyft should get ahead of potential major changes in addition to their normal operations in reducing DUI cases. Whether they plan on running targeted campaigns to raise awareness or incentivizing drivers in those "danger" times, they should consider analysis such as these to maintain a role model status at the forefront of traffic safety.   
+Uber and Lyft should get ahead of potential major changes in addition to their normal operations in reducing DUI cases, whether directly or as a byproduct of their services. Whether they plan on running targeted campaigns to raise awareness or incentivizing drivers in those "danger" times, they should consider analysis such as these into their future plans to maintain an active role model status at the forefront of traffic safety.   
 
 ## What data are you going to use for this? How will you acquire this data?
 
@@ -23,7 +23,11 @@ I am using raw traffic data collected by the US Department of Transportation. It
 
 ## In brief, outline your approach to solving this problem (knowing that this might change later).
 
-The observation of data variables specifically for the USDOT will pertain to a combination of vehicle and person(s) variables. These variables will be mixed and matched to determine if there is statistical significance.
+The observation of data variables specifically for the USDOT will pertain to a combination of accident, vehicle and person(s) variables. These variables will be mixed and matched to determine if there is statistical significance.
+
+I will analyze DUI related incidents by time of day and day of week to determine the most dangerous times and group by zip code. The data will also be visualized year-over-year over a 7 year period since Uber was first launched in 2010. Lyft launched in 2012.  
+
+Summary statistics will also be provided per zip code to disect the conditions, driver information, accident severity.
 
 
 ### Dataset(s) Details Needed:
