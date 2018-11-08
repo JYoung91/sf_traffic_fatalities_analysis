@@ -1,0 +1,41 @@
+---
+title: "traffic_fatalities_sf_15_17"
+author: "Jeremie Young"
+date: "November 6, 2018"
+output: html_document
+---
+
+# load accident dataset as CSV file
+```{r}
+library(readr)
+accident2015 -> read_csv("C:/Users/jeremiey/Google Drive/Springboard Intro to Data Science/Capstone/Raw Datasets/accident2015.csv")
+accident2016 <- read_csv("C:/Users/jeremiey/Google Drive/Springboard Intro to Data Science/Capstone/Raw Datasets/accident2016.csv")
+accident2017 <- read_csv("C:/Users/jeremiey/Google Drive/Springboard Intro to Data Science/Capstone/Raw Datasets/accident2017.csv")
+```
+
+# import both dplyr and tidyr packages to use
+```{r}
+library(dplyr)
+library(tidyr)
+```
+
+# merge datasets
+```{r}
+accident15_17 <- bind_rows(accident2015, accident2016, accident2017)
+```
+
+
+
+# subset observations of the dataset to CA state (6) AND San Francisco County codes (1333 - FORT MASON MILITARY RESERVATION (HISTORICAL), 1337 - FORT WINFIELD SCOTT, 2905 - PRESIDIO OF SAN FRANCISCO (HISTORICAL), 3290 - SAN FRANCISCO
+```{r}
+accident15_17 <- accident15_17 %>% 
+             filter(CITY == 3290 | CITY == 1333 | CITY == 1337 | CITY == 2905)
+```
+
+# Are 116 local observations enough to create an analysis? If not, I would collect more datasets from previous years
+# there are additional variables that need to be removed from the newer dataframes (2015-2017) to match with the older ones
+# some outputs have been slightly changed within a those variables (they are number coded)
+# 
+
+
+
