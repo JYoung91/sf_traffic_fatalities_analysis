@@ -23,7 +23,7 @@ library(tidyr)
 # subset dataframe by removing unused variables
 ```{r}
 CollisionRecords <- CollisionRecords %>% 
-             select(-JURIS, -OFFICER_ID, -REPORTING_DISTRICT, -CHP_SHIFT, -CITY_DIVISION_LAPD, -CITY_DIVISION_LAPD, -CALTRANS_COUNTY, -CALTRANS_DISTRICT, -ROUTE_SUFFIX, -POSTMILE_PREFIX, -POSTMILE, -CHP_ROAD_TYPE)
+             select(-JURIS, -OFFICER_ID, -REPORTING_DISTRICT, -CHP_SHIFT, -CITY_DIVISION_LAPD, -CITY_DIVISION_LAPD, -CALTRANS_COUNTY, -CALTRANS_DISTRICT, -ROUTE_SUFFIX, -POSTMILE_PREFIX, -POSTMILE, -CHP_ROAD_TYPE, -LATITUDE, -LONGITUDE)
 head(CollisionRecords)
 
 ```
@@ -51,5 +51,33 @@ write.table(coordinates, "coordinates.csv", row.names = FALSE, sep = ",")
 
 ```
 
+# import geocoded sheet with coordinate data
+```{r}
+coordinates_geocodio <- read_csv("C:/Users/Jeremie/Google Drive/Springboard Intro to Data Science/Capstone/coordinates_geocodio.csv")
+head(coordinates_geocodio)
+```
+
+# clean out undeliverable records that resulted in missing data (0 for coordinates & accurancy), coordinate accuracy level of less than .7, and incorrect geocoding to San Mateo County
+```{r}
+coordinates_geocodio <- coordinates_geocodio %>% 
+    filter(`Accuracy Score` != 0 & `Accuracy Score` > .7 & County != "San Mateo County")
+```
+
+# keep pertinent columns
+```{r}
+coordinates_geocodio <- coordinates_geocodio %>% 
+    select(CASE_ID, Latitude, Longitude, `Accuracy Score`, `Accuracy Type`, Zip)
+```
+
+# reinsert into original dataset and remove records
+```{r}
+CollisionRecords <- full_join(CollisionRecords, coordinates_geocodio, by = "CASE_ID")
+```
+
+# remove N/A records
+```{r}
+CollisionRecords <- CollisionRecords %>% 
+    filter(!is.na(`Accuracy Score`))
+```
 
 
