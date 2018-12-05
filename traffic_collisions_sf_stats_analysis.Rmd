@@ -1,0 +1,59 @@
+---
+title: "Traffic Collision Statistical Analysis"
+author: "Jeremie Young"
+date: "December 5, 2018"
+output: html_document
+---
+
+Upon analyzing a previously used data set that included only collisions in San Francisco that resulted in death(s), I found that the numbers were very small year over year cleaning the data. Now that I have a much larger dataset that includes all traffic incidents, including those that resulted in several degrees of injury and property damage, I have a much more usable data to find insights for analysis.
+
+While "Number Killed" and "Number Injured" can exist as dependent variables,  I chose to use "Collision Severity" as it defines different levels of coliision severity. The variable is as defined:
+
+#### COLLISION_SEVERITY
+1 - Fatal
+2 - Injury (severe)
+3 - Injury (other visible)
+4 - injury (complaint of pain)
+0 - PDO (property damage only)
+
+This combines both combines 3 different variables while indicating the highest level of injury. I used the "Number Killed" and "Number Injured" variables as supplements to give a statistics in terms of frequency.
+
+As a result, I found that in all of San Francisco (2010 - 2017): 
+
+* the median of the number of people injured and killed is 1 and 0 respectively, which is fortunately very low
+* the max number of injured and death for a single incident is 19 and 3.
+* the total number of recorded incidents that resulted in injuries is 31,567(*) or 81% of all incidents
+* the total number of recorded incidents that resulted in death(s) is 215(*) or 0.5% of all incidents
+
+(*) 1,673 records or or 4.11% of the original dataset was lost in the geocoding process of uncovering zip data. The data removed included undeliverable records that resulted in missing data (0 for coordinates & accurancy), coordinate accuracy level of less than .7, and incorrect geocoding to San Mateo County
+
+***
+
+#### Dissecting Collisions by Zip
+
+San Francisco only covers 231.89 sq mi. Despite the small footprint, the city varies from neighborhood to neighborhood, thus differences in population density, speed limits, and traffic safety. When I segmented the data by zip, I found that the top 5 in frequency were:
+
+Zip   | Injured | Killed 
+------|---------|--------
+94103 |  4,177  | 29
+94102 |  2,433  | 14
+94109 |  2,288  | 15
+94112 |  2,138  | 22
+94124 |  1,630  | 16
+
+
+***
+
+#### Analysis Against Predictive Variables
+
+Within the dataset, I identified a number of key variables I believe to hold significance against COLLISION_SEVERITY.
+
+* PCF_VIOL_CATEGORY
+* LIGHTING
+* ROAD_SURFACE
+* PED_ACTION
+* ALCOHOL_INVOLVED
+
+
+
+
