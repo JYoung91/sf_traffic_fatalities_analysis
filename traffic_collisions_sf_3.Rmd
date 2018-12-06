@@ -23,7 +23,7 @@ library(tidyr)
 # subset dataframe by removing unused variables
 ```{r}
 CollisionRecords <- CollisionRecords %>% 
-             select(-JURIS, -OFFICER_ID, -REPORTING_DISTRICT, -CHP_SHIFT, -CITY_DIVISION_LAPD, -CITY_DIVISION_LAPD, -CALTRANS_COUNTY, -CALTRANS_DISTRICT, -ROUTE_SUFFIX, -POSTMILE_PREFIX, -POSTMILE, -CHP_ROAD_TYPE, -LATITUDE, -LONGITUDE)
+             select(-JURIS, -OFFICER_ID, -REPORTING_DISTRICT, -CHP_SHIFT, -CNTY_CITY_LOC, -SPECIAL_COND, -BEAT_TYPE, -CHP_BEAT_TYPE, -CITY_DIVISION_LAPD, -CHP_BEAT_CLASS, -BEAT_NUMBER, -CALTRANS_COUNTY, -CALTRANS_DISTRICT, -ROUTE_SUFFIX, -POSTMILE_PREFIX, -POSTMILE, -CHP_ROAD_TYPE, -LATITUDE, -LONGITUDE)
 head(CollisionRecords)
 
 ```
@@ -80,8 +80,30 @@ CollisionRecords <- CollisionRecords %>%
     filter(!is.na(`Accuracy Score`))
 ```
 
+# export cleaned sheet
+```{r}
+write.table(CollisionRecords, "CollisionRecordsCleaned.csv", row.names = FALSE, sep = ",")
+```
+
+
 # summarize data
 ```{r}
+CollisionRecords %>% group_by(COLLISION_SEVERITY) %>%  count(sort = TRUE)
+
+CollisionRecords %>% 
+  group_by(COLLISION_SEVERITY) %>%  
+    summarise(medianNUMBER_INJURED = median(NUMBER_INJURED),
+              meanNUMBER_INJURED = mean(NUMBER_INJURED),
+              maxNUMBER_INJURED = max(NUMBER_INJURED),
+              sdNUMBER_INJURED = sd(NUMBER_INJURED),
+              frequencyNUMBER_INJURED = sum(NUMBER_INJURED),
+                                              
+              medianNUMBER_KILLED = median(NUMBER_KILLED),
+              meanNUMBER_KILLED = mean(NUMBER_KILLED),
+              maxNUMBER_KILLED = max(NUMBER_KILLED),
+              sdNUMBER_KILLED = sd(NUMBER_KILLED),
+              frequencyNUMBER_KILLED = sum(NUMBER_KILLED)) 
+
 CollisionRecords %>% 
   group_by(Zip) %>%  
     summarise(medianNUMBER_INJURED = median(NUMBER_INJURED),
@@ -98,7 +120,7 @@ CollisionRecords %>%
       top_n(5)
 ```
 
-# analyze dependant variable COLLISION_SEVERITY against predictive variables
+# analyze dependant variable COLLISION_SEVERITY against predictive variables visually
 ```{r}
 library(ggplot2)
 ggplot(CollisionRecords, aes(factor(COLLISION_SEVERITY), fill = factor(COLLISION_SEVERITY))) +
@@ -108,7 +130,7 @@ ggplot(CollisionRecords, aes(factor(COLLISION_SEVERITY), fill = factor(COLLISION
     geom_bar() +
     facet_grid(~ Zip)
 
-ggplot(CollisionRecords, aes(factor(PCF_VIOL_CATEGORY), factor(COLLISION_SEVERITY))) +
+CollisionRecords %>% filter(Zip == 94103) %>%  ggplot(aes(factor(PCF_VIOL_CATEGORY), factor(COLLISION_SEVERITY))) +
     geom_jitter()
 
 ggplot(CollisionRecords, aes(factor(LIGHTING), factor(COLLISION_SEVERITY))) +
@@ -127,3 +149,10 @@ ggplot(CollisionRecords, aes(factor(ALCOHOL_INVOLVED), factor(COLLISION_SEVERITY
     geom_jitter()
 
 ```
+
+
+
+
+
+
+
