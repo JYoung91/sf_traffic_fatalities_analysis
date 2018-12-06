@@ -5,9 +5,18 @@ date: "December 5, 2018"
 output: html_document
 ---
 
+# load cleaned accident dataset as CSV file and load used packages
+```{r}
+library(readr)
+library(ggplot2)
+CollisionRecordsCleaned <- read_csv("C:/Users/Jeremie/Google Drive/Springboard Intro to Data Science/Capstone/CollisionRecordsCleaned.csv")
+head(CollisionRecordsCleaned)
+
+```
+
 Upon analyzing a previously used data set that included only collisions in San Francisco that resulted in death(s), I found that the numbers were very small year over year cleaning the data. Now that I have a much larger dataset that includes all traffic incidents, including those that resulted in several degrees of injury and property damage, I have a much more usable data to find insights for analysis.
 
-While "Number Killed" and "Number Injured" can exist as dependent variables,  I chose to use "Collision Severity" as it defines different levels of coliision severity. The variable is as defined:
+While "Number Killed" and "Number Injured" can exist as dependent variables,  I chose to use "Collision Severity" as it defines different levels of severity. The variable is as defined:
 
 #### COLLISION_SEVERITY
 1 - Fatal
@@ -16,43 +25,129 @@ While "Number Killed" and "Number Injured" can exist as dependent variables,  I 
 4 - injury (complaint of pain)
 0 - PDO (property damage only)
 
-This combines both combines 3 different variables while indicating the highest level of injury. I used the "Number Killed" and "Number Injured" variables as supplements to give a statistics in terms of frequency.
+The variable indicates the highest level of injury accounted for. I used the "Number Killed" and "Number Injured" variables as supplements to give statistics in terms of frequency.
 
 As a result, I found that in all of San Francisco (2010 - 2017): 
+
+When observing COLLISION_SEVERITY, we find that the most common results from an incident was 4 - injury (complaint of pain), as expected. The frequency count decreases as the severity of the injury becomes greater, From 3 - Injury (other visible) to 2 - Injury (severe) to 1 - Fatal.
+
+Severity  | Count 
+----------|--------
+    4     |  16179
+    3     |  7280
+    2     |  1684
+    1     |  211
+    
+Also:    
 
 * the median of the number of people injured and killed is 1 and 0 respectively, which is fortunately very low
 * the max number of injured and death for a single incident is 19 and 3.
 * the total number of recorded incidents that resulted in injuries is 31,567(*) or 81% of all incidents
 * the total number of recorded incidents that resulted in death(s) is 215(*) or 0.5% of all incidents
 
-(*) 1,673 records or or 4.11% of the original dataset was lost in the geocoding process of uncovering zip data. The data removed included undeliverable records that resulted in missing data (0 for coordinates & accurancy), coordinate accuracy level of less than .7, and incorrect geocoding to San Mateo County
+(*) 1,673 records or or 4.11% of the original dataset was lost in the geocoding process of uncovering zip data. The data removed included undeliverable records that resulted in missing data (0 for coordinates & accurancy), coordinate accuracy level of less than .7, and incorrect geocoding to San Mateo County.
+
+```{r}
+# table
+CollisionRecordsCleaned %>% group_by(COLLISION_SEVERITY) %>%  count(sort = TRUE)
+
+# bar chart
+ggplot(CollisionRecordsCleaned, aes(factor(COLLISION_SEVERITY), fill = factor(COLLISION_SEVERITY))) +
+    geom_bar()
+
+# summary statistics
+CollisionRecordsCleaned %>% 
+  group_by(COLLISION_SEVERITY) %>%  
+    summarise(medianNUMBER_INJURED = median(NUMBER_INJURED),
+              meanNUMBER_INJURED = mean(NUMBER_INJURED),
+              maxNUMBER_INJURED = max(NUMBER_INJURED),
+              sdNUMBER_INJURED = sd(NUMBER_INJURED),
+              frequencyNUMBER_INJURED = sum(NUMBER_INJURED),
+                                              
+              medianNUMBER_KILLED = median(NUMBER_KILLED),
+              meanNUMBER_KILLED = mean(NUMBER_KILLED),
+              maxNUMBER_KILLED = max(NUMBER_KILLED),
+              sdNUMBER_KILLED = sd(NUMBER_KILLED),
+              frequencyNUMBER_KILLED = sum(NUMBER_KILLED)) 
+```
 
 ***
 
 #### Dissecting Collisions by Zip
 
-San Francisco only covers 231.89 sq mi. Despite the small footprint, the city varies from neighborhood to neighborhood, thus differences in population density, speed limits, and traffic safety. When I segmented the data by zip, I found that the top 5 in frequency were:
+San Francisco only covers 231.89 sq mi. Despite its small footprint, the city varies from neighborhood to neighborhood in terms of geography and people. Thus there are differences in local population density, speed limits, and traffic safety. When I segmented the data by zip, I found that the top 5 in frequency were:
 
-Zip   | Injured | Killed 
+ Zip  | Injured | Killed 
 ------|---------|--------
 94103 |  4,177  | 29
 94102 |  2,433  | 14
 94109 |  2,288  | 15
+94110 |  2,872  | 12
 94112 |  2,138  | 22
 94124 |  1,630  | 16
 
+The zips that are indicated to have the most incidents of both categories (injured and killed) are centralized in the busy City's downtown area that encompasses Market Street, the surrounding Mission District, the Polk Gulch stretching to Russian Hill, and the Outer Mission/Balboa Park area, and Bayview. 
 
-***
+What I can observe is that all of these Zip areas have a major streets running through them that have speed limits in excess of 40+ mph. The probability of injury and/or death is exponentially higher with collisions at speed, especially when colliding with objects or people at rest. This can lead us that speed is a likely predictor of collision severity.
 
+```{r}
+# summary statistics grouped by zip
+CollisionRecordsCleaned %>% 
+  group_by(Zip) %>%  
+    summarise(medianNUMBER_INJURED = median(NUMBER_INJURED),
+              meanNUMBER_INJURED = mean(NUMBER_INJURED),
+              maxNUMBER_INJURED = max(NUMBER_INJURED),
+              sdNUMBER_INJURED = sd(NUMBER_INJURED),
+              frequencyNUMBER_INJURED = sum(NUMBER_INJURED),
+                                                  
+              medianNUMBER_KILLED = median(NUMBER_KILLED),
+              meanNUMBER_KILLED = mean(NUMBER_KILLED),
+              maxNUMBER_KILLED = max(NUMBER_KILLED),
+              sdNUMBER_KILLED = sd(NUMBER_KILLED),
+              frequencyNUMBER_KILLED = sum(NUMBER_KILLED))  %>% 
+    top_n(6)
+
+# bar chart
+ggplot(CollisionRecordsCleaned, aes(factor(COLLISION_SEVERITY), fill = factor(COLLISION_SEVERITY))) +
+    geom_bar() +
+    facet_grid(~ Zip)
+```
+
+
+ ***
+ 
 #### Analysis Against Predictive Variables
 
-Within the dataset, I identified a number of key variables I believe to hold significance against COLLISION_SEVERITY.
+Within the dataset, I identified a number of key variables I believe to hold statistical significance against COLLISION_SEVERITY.
 
-* PCF_VIOL_CATEGORY
+* PCF_VIOL_CATEGORY - violation category
 * LIGHTING
 * ROAD_SURFACE
-* PED_ACTION
-* ALCOHOL_INVOLVED
+* PED_ACTION - pedestrian action at the time of accident
+* ALCOHOL_INVOLVED - yes or n/a
+* TYPE_OF_COLLISION
+
+
+```{r}
+ggplot(CollisionRecordsCleaned, aes(factor(PCF_VIOL_CATEGORY), factor(COLLISION_SEVERITY))) +
+    geom_jitter()
+
+ggplot(CollisionRecordsCleaned, aes(LIGHTING, factor(COLLISION_SEVERITY))) +
+    geom_jitter()
+
+ggplot(CollisionRecordsCleaned, aes(ROAD_SURFACE, factor(COLLISION_SEVERITY))) +
+    geom_jitter()
+
+ggplot(CollisionRecordsCleaned, aes(PED_ACTION, factor(COLLISION_SEVERITY))) +
+    geom_jitter()
+
+ggplot(CollisionRecordsCleaned, aes(ALCOHOL_INVOLVED, factor(COLLISION_SEVERITY))) +
+    geom_jitter()
+
+ggplot(CollisionRecordsCleaned, aes(TYPE_OF_COLLISION, factor(COLLISION_SEVERITY))) +
+    geom_jitter()
+```
+
 
 
 
