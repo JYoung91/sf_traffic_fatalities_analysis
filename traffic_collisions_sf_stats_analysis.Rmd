@@ -9,7 +9,8 @@ output: html_document
 ```{r}
 library(readr)
 library(ggplot2)
-CollisionRecordsCleaned <- read_csv("C:/Users/Jeremie/Google Drive/Springboard Intro to Data Science/Capstone/CollisionRecordsCleaned.csv")
+library(dplyr)
+CollisionRecordsCleaned <- read_csv("C:/Users/jeremiey/Google Drive/Springboard Intro to Data Science/Capstone/CollisionRecordsCleaned.csv")
 head(CollisionRecordsCleaned)
 
 ```
@@ -49,15 +50,17 @@ Also:
 
 ```{r}
 # table
-CollisionRecordsCleaned %>% group_by(COLLISION_SEVERITY) %>%  count(sort = TRUE)
+CollisionRecordsCleaned %>% group_by(Collision_Severity) %>%  count(sort = TRUE)
 
 # bar chart
-ggplot(CollisionRecordsCleaned, aes(factor(COLLISION_SEVERITY), fill = factor(COLLISION_SEVERITY))) +
-    geom_bar()
+CollisionRecordsCleaned %>% group_by(Collision_Severity) %>%  arrange(Collision_Severity) %>%
+    ggplot(aes(Collision_Severity, fill = Collision_Severity)) +
+    geom_bar() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # summary statistics
 CollisionRecordsCleaned %>% 
-  group_by(COLLISION_SEVERITY) %>%  
+  group_by(Collision_Severity) %>%  
     summarise(medianNUMBER_INJURED = median(NUMBER_INJURED),
               meanNUMBER_INJURED = mean(NUMBER_INJURED),
               maxNUMBER_INJURED = max(NUMBER_INJURED),
@@ -110,7 +113,7 @@ CollisionRecordsCleaned %>%
 # bar chart
 ggplot(CollisionRecordsCleaned, aes(factor(COLLISION_SEVERITY), fill = factor(COLLISION_SEVERITY))) +
     geom_bar() +
-    facet_grid(~ Zip)
+    facet_wrap(~ Zip, ncol = 5)
 ```
 
 
@@ -127,28 +130,41 @@ Within the dataset, I identified a number of key variables I believe to hold sta
 * ALCOHOL_INVOLVED - yes or n/a
 * TYPE_OF_COLLISION
 
-
+# Primary Collision Factors
 ```{r}
-ggplot(CollisionRecordsCleaned, aes(factor(PCF_VIOL_CATEGORY), factor(COLLISION_SEVERITY))) +
-    geom_jitter()
+ggplot(CollisionRecordsCleaned, aes(PCF_Violation, Collision_Severity, fill = Collision_Severity)) +
+    geom_tile() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(name ="Primary Collision Factor") +
+    scale_y_discrete(name ="Collision Severity")
 
-ggplot(CollisionRecordsCleaned, aes(LIGHTING, factor(COLLISION_SEVERITY))) +
-    geom_jitter()
+ggplot(CollisionRecordsCleaned, aes(Light_Condition, Collision_Severity)) +
+    geom_jitter() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(name ="Light Condition") +
+    scale_y_discrete(name ="Collision Severity")
+  
+ggplot(CollisionRecordsCleaned, aes(Road_Surface, Collision_Severity)) +
+    geom_jitter() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(name ="Road Surface") +
+    scale_y_discrete(name ="Collision Severity")  
 
-ggplot(CollisionRecordsCleaned, aes(ROAD_SURFACE, factor(COLLISION_SEVERITY))) +
-    geom_jitter()
+ggplot(CollisionRecordsCleaned, aes(Pedestrian_Action, Collision_Severity)) +
+    geom_jitter() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(name ="Pedestrian Action") +
+    scale_y_discrete(name ="Collision Severity")
+  
+ggplot(CollisionRecordsCleaned, aes(ALCOHOL_INVOLVED, Collision_Severity)) +
+    geom_jitter() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(name ="Alcohol Involved?") +
+    scale_y_discrete(name ="Collision Severity")  
 
-ggplot(CollisionRecordsCleaned, aes(PED_ACTION, factor(COLLISION_SEVERITY))) +
-    geom_jitter()
-
-ggplot(CollisionRecordsCleaned, aes(ALCOHOL_INVOLVED, factor(COLLISION_SEVERITY))) +
-    geom_jitter()
-
-ggplot(CollisionRecordsCleaned, aes(TYPE_OF_COLLISION, factor(COLLISION_SEVERITY))) +
-    geom_jitter()
+ggplot(CollisionRecordsCleaned, aes(Collision_Type, Collision_Severity)) +
+    geom_jitter() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(name ="Collision Type") +
+    scale_y_discrete(name ="Collision Severity")  
 ```
-
-
-
-
-
