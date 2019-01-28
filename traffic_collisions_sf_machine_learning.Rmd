@@ -5,7 +5,7 @@ date: "January 5, 2019"
 output: html_document
 ---
 
-In my problem, I am hoping to predict the outcomes of "Collision Severity", which is defined by 5 features below.
+In my problem, I am hoping to predict the outcomes of “Collision Severity”, which is defined by 5 features below.
 
 The features are ordinal from least to most severe:
 -Property Damage
@@ -16,7 +16,7 @@ The features are ordinal from least to most severe:
 
 The specific model I will be using is a multi-nomial logistic regression to make predictions for the multiple outcomes. 
 
-However, it is important to understand binary logistic regression model in which a multi-nomial regression is derived from. This particular model predicts a response variable on a binary level, either "TRUE or FALSE", "this or that", and in this context, "fatal or non-fatal", in relation to explanatory variable(s) that are used to determine the outcome.
+However, it is important to understand binary logistic regression model in which a multi-nomial regression is derived from. This particular model predicts a response variable on a binary level, either “TRUE or FALSE”, “this or that”, and in this context, “fatal or non-fatal”, in relation to explanatory variable(s) that are used to determine the outcome.
 
 This feature engineering of the response variable would clearly consolidate 4 non-fatal features into one, while fatalities remain untouched:
 
@@ -26,7 +26,7 @@ This feature engineering of the response variable would clearly consolidate 4 no
               -PDO (property damage only)
 -fatal 
 
-Explanatory variables are responsible in serving as predictors of the "fatal and non-fatal" outcome. We can determine a singular best fit predictor based on its coefficients as statistically significant to our problem. 
+Explanatory variables are responsible in serving as predictors of the “fatal and non-fatal” outcome. We can determine a singular best fit predictor based on its coefficients as statistically significant to our problem. 
 
 Our explanatory variables are all discrete variables, meaning that there are a finite amount of values:
 -PCF Violation (Primary Collision Factors)
@@ -47,8 +47,72 @@ ml.colsev <- read.csv("C:/Users/jeremiey/Google Drive/Data Science/Springboard I
 head(ml.colsev)
 ```
 
-Perform logistic regression model with each predictor of Fatal to determine coefficients. Also include cross table to observe distribution.
+Establish baseline of response variable bt factoring
+```{r}
+library(forcats)
 
+ml.colsev$Fatal <- fct_relevel(ml.colsev$Fatal, 
+                               "Non-Fatal", 
+                               "Fatal")
+
+levels(ml.colsev$Fatal)
+```
+
+Establish baseline for explanatory variables by finding the largest disproportionate ratio between non-fatal and fatal per feature
+```{r}
+
+
+ml.colsev$Collision_Type <- fct_relevel(ml.colsev$Collision_Type,
+                                        "Sideswipe",
+                                        "Rear End",
+                                        "Head-On",
+                                        "Hit Object",
+                                        "Broadside",
+                                        "Vehicle/Pedestrian")
+levels(ml.colsev$Collision_Type)
+
+
+ml.colsev$PCF_Violation <- fct_relevel(ml.colsev$PCF_Violation,
+                                       "Automobile Right of Way",
+                                       "Unsafe Starting or Backing",
+                                       "Other Hazardous Violation")
+levels(ml.colsev$PCF_Violation)
+
+
+ml.colsev$Light_Condition <- fct_relevel(ml.colsev$Light_Condition,
+                                         "Daylight",                                         
+                                         "Dark - Street Lights",
+                                         "Dusk - Dawn",
+                                         "Dark - No Street Lights",                                      
+                                         "Dark - Street Lights Not Functioning")
+levels(ml.colsev$Light_Condition)
+
+
+ml.colsev$Road_Surface <- fct_relevel(ml.colsev$Road_Surface,
+                                      "Wet",                                      
+                                      "Dry")
+levels(ml.colsev$Road_Surface)
+
+
+ml.colsev$Pedestrian_Action <- fct_relevel(ml.colsev$Pedestrian_Action,
+                                           "No Pedestrian Involved",
+                                           "In Road, Including Shoulder",
+                                           "Not in Road",
+                                           "Crossing in Crosswalk at Intersection",
+                                           "Crossing Not in Crosswalk",
+                                           "Crossing in Crosswalk Not at Intersection")
+levels(ml.colsev$Pedestrian_Action)
+
+
+ml.colsev$INTERSECTION <- fct_relevel(ml.colsev$INTERSECTION,
+                                      "N",
+                                      "Y")
+levels(ml.colsev$INTERSECTION)
+```
+
+
+
+Perform logistic regression model with each predictor of Fatal to determine coefficients. Also include cross table to observe distribution.
 ```{r}
 xtabs(~ Fatal + Collision_Type, data = ml.colsev)
 glm1 <- glm(Fatal ~ Collision_Type, data = ml.colsev, family = "binomial")
@@ -62,9 +126,10 @@ xtabs(~ Fatal + Light_Condition, data = ml.colsev)
 glm3 <- glm(Fatal ~ Light_Condition, data = ml.colsev, family = "binomial")
 summary(glm3)
 
-xtabs(~ Fatal + Road_Surface, data = ml.colsev)
-glm4 <- glm(Fatal ~ Road_Surface, data = ml.colsev, family = "binomial")
-summary(glm4)
+# Road surface not signifant with baseline adjustment
+#xtabs(~ Fatal + Road_Surface, data = ml.colsev)
+#glm4 <- glm(Fatal ~ Road_Surface, data = ml.colsev, family = "binomial")
+#summary(glm4)
 
 xtabs(~ Fatal + Pedestrian_Action, data = ml.colsev)
 glm5 <- glm(Fatal ~ Pedestrian_Action, data = ml.colsev, family = "binomial")
@@ -74,29 +139,28 @@ xtabs(~ Fatal + INTERSECTION, data = ml.colsev)
 glm6 <- glm(Fatal ~ INTERSECTION, data = ml.colsev, family = "binomial")
 summary(glm6)
 
-xtabs(~ Fatal + Zip, data = ml.colsev)
-glm7 <- glm(Fatal ~ Zip, data = ml.colsev, family = "binomial")
-summary(glm7)
+#xtabs(~ Fatal + Zip, data = ml.colsev)
+#glm7 <- glm(Fatal ~ Zip, data = ml.colsev, family = "binomial")
+#summary(glm7)
 ```
 
 Observing Collision Type
 
-Most of the fatal cases fall under the Vehicle/Pedestrian with 119 incidents. Broadside (side of car) crashes resulted in 30 deaths. All other fatal cases fall below it. This shows that there is a very small sample size to analyze for fatalities.
+Most of the fatal cases fall under the Vehicle/Pedestrian with 119 incidents. The category also resulted in most deaths in proportion to a fatal/non-fatal ratio.
 
 Based on the coefficients calculated of each feature, 
 
 The standar error of each coefficient are relatively small. Most are less than 1, meaning the estimates are more precise.
 
-However, observing the z-values show that Vehicle/Pedestrian and Sideswipe collision types at -8.838 and 3.265 respectively are sufficiently far from 0, indicating that the estimates are both large and precise enough to be statistically significant.
+Observing the z-values show that Vehicle/Pedestrian at 8.176 is most sufficiently far from 0, indicating that the estimates are both large and precise enough to be statistically significant. Head-On and Hit Object are also significant with high z-values as well. The "Other" category is significant but does not have enough information for us to know the type of collision it was.
 
-Finally, we also observe the p-value where lower probabilities provide strong evidence against the null hypothesis. We do this by comparing it to a standard threshold value of 0.05 to begin with. We can determine the following p-values of the explanatory variables below that are less than the threshold value, from most to least significant:
+Finally, we also observe the p-value where lower probabilities provide strong evidence against the null hypothesis. We do this by comparing it to a standard threshold value of 0.05 to begin with. The significance codes can also be used in conjunction, indicated by the number of "*"" with a max of 3. The greater the number, the more significant. We can determine the following p-values of the explanatory variables below that are less than the threshold value, from most to least significant:
 
 -Vehicle/Pedestrian
--Sideswipe
--Rear End
 -Other
--Not Stated 
--Head-On 
+-Hit Object
+-Head-On
+-Broadside
 
 
 We can use this reasoning to apply to all other predictors to determine if they are significiant. We find that Pedestrian Action, Road Surface, Intersection, and Zip are not statistically significant to our model, therefore we can remove them.
@@ -110,7 +174,7 @@ While there can be a singular predictor to build our model but it is more likely
 Consolidated into one model
 
 ```{r}
-glm8 <- glm(Fatal ~ Collision_Type + PCF_Violation + Light_Condition, data = ml.colsev, family = "binomial")
+glm8 <- glm(Fatal ~ Collision_Type + PCF_Violation + Light_Condition + Pedestrian_Action + INTERSECTION, data = ml.colsev, family = "binomial")
 summary(glm8)
 ```
 
