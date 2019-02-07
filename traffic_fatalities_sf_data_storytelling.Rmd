@@ -1,0 +1,55 @@
+---
+title: "traffic_collision_sf_data_storytelling"
+author: "Jeremie Young"
+date: "December 29, 2018"
+output: html_document
+---
+
+# Introduction
+
+I've grown up in San Francisco all my life. Observing how the city is experiencing a boom in tech, and in turn, a population boom, I see the latent consequences of such massive growth. The city was not intended to accommodate so many people. Issues include lack of affordable housing, widespread homelessness, and inadequate infrastructure. I can confidently observe that traffic is slower, more cars on the road, and drivers are increasingly becoming more aggressive.
+
+Though San Francisco only encompasses xxx sq mi., the city varies from zip to zip in population density and road safety. It is apparent that some areas are more dangerous than others, but it is crucial to understand determining factors that affect the likelihood of incidents (in varying degrees) throughout. This will help city policy makers, planners, and private entities to contribute in transportation advancements and safety. My intended audience are autonomous vehicle developers. 
+
+In recent years, autonomous vehicles have made signicant advancements in image processing to determine obstacles on the road. However, the technology has obvious limitations such as conditions where reflective light tampers with the vehicles ability to properly identift obstacles. The technology also cannot determine intent of others, especially with pedestrians darting across the streets and also tricky driving situations such as onramp lane merges.
+
+
+# Deep Dive into the Datset
+
+The datset that I acquired was from the California Highway Patrol. The dataset dates range from 2010 to 2017 to ensure that the sample size is large enough. For every incident reported to authorities, a record exists in defining collision, person, and vehicle conditions for a full report of usable variables. 
+
+The single most important variable is the "Collision Severity" variable. It indicates the highest degree of injury sustained for every record. This is key in measuring the severity without a human bias. A new variable could have been created that summed the number of injuries and deaths while also taking into account the degree of injury for each person. However, this raises the question of whether we are equipped to rate a fatality to be more severe than 4 severe injuries. 
+
+To determine which variables play a role in affecting "Collision Severity", I've chosen:
+
+PCF Violation - violation type by driver
+Lighting - lighting conditions at the time of incident
+Road Surface - road conditions at the time of incident
+Pedestrian Action (if applicable) - action of pedestrian at the time of incident 
+Type of Collision
+
+# Dataset Limitations
+
+The first limitation I encountered was an inadaquate sample size from an initial dataset when I only observed traffic fatalities. On average, there were between 30-40 cases per year, which made for a sample size that would not have been representative of the population since cases were infrequent and varied. This version of the project was discarded in favor of a much larger datset that included all records ranging from property damange to fatalities.
+
+The second limitation encountered was the lack of accurate geographic location. While there were cross streets provided, I needed to extract exact location if I wanted to plot all incidents on a map. The extraction process produced varying degrees of errors that were taken into consideration.
+
+The last limitation was the omission of variables on a continuous scale, most importantly, speed at which the incident occurred. Previous studies have found that speed kills. Higher speeds exponentially increases the likelihood of a more severe injury. The absence of such an important determining factor to severity is a significant limitation.
+
+# Data Cleaning & Wrangling
+
+The major data wrangling steps came in the form of:
+
+- Remove unused variables
+- Manipulating address variables to begin geocoding process to extract exact zip and coordinate data
+- Factoring/recoding and labeling categorical values  
+
+Geocoding Location Process
+
+As discussed above, the lack of exact location for each record was a major limiting factor of the project. Not only was the zip data missing, the most clearly defined indicator of location was the cross street in which each incident occured. To more accurately plot each datapoint on a map, I needed the longitude and latitude variables. I also needed the zip of each incident to group records to segment the data for more usable statistics.
+
+
+.	Based on these findings, what approach are you going to take? How has your approach changed from what you initially proposed, if applicable?
+
+
+
