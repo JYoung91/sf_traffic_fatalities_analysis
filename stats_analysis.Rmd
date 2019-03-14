@@ -1,0 +1,232 @@
+---
+title: "Traffic Collision Statistical Analysis"
+author: "Jeremie Young"
+date: "December 5, 2018"
+output: html_document
+---
+
+# Statistical Analysis
+
+With the cleaned data set, I wanted to know more about the fatal cases and how the independent variables related visually by way of frequency.
+
+I did this by creating:
+*Frequency tables & bar plots
+*Heatmaps 
+
+Simple distribution tables with supporting bar charts were created to observe the counts of fatalities vs non-fatalities. When grouping Year and Zip, non-fatal data was filtered out.
+
+
+**Fatal vs Non-Fatal**
+
+Fatal Cases     | 169
+----------------|------
+Non-Fatal Cases | 31191
+
+This table shows that non-fatal cases vastly outnumber fatal cases. 
+
+
+**Fatal Cases by Year**
+
+Year  | Fatal Cases
+------|------------
+2010  |    15
+2011  |    20
+2012  |    26
+2013  |    20
+2014  |    18
+2015  |    27
+2016  |    21
+2017  |    14
+2018  |    8
+
+The table comparing years shows that the city is on track to reduce fatalities as of 2018. However, we must keep in mind that 31,360 of the original 40,021 unique cases remain after the data wrangling phase, which may have removed numerous fatal cases recorded. 207 cases were removed from the geocoding step. An additional 7,828 records were removed as a result of values from independant variable being “Not Stated”, “Other”, “Unknown”.
+
+
+**Fatal Cases by Zip (Top 6)**
+
+Zip    | Fatal Cases
+-------|------------
+94103  |    19
+94112  |    17
+94109  |    14
+94124  |    14
+94102  |    11
+94116  |    10
+
+The zip table shows the top 6 zip areas that had more than 10 cases of fatalities out of the total of 25 unique codes in the city.
+
+*The year and zip tables are also be shown as bar charts below.* 
+
+```{r}
+library(ggplot2)
+library(readr)
+CollisionsCleaned <- read_csv("C:/Users/jerem/Desktop/Capstone/CollisionsCleaned.csv")
+
+# Distribution tables for "Fatal"
+count.fatal <- CollisionsCleaned %>% group_by(Fatal) %>%  count(sort = FALSE)
+colnames(count.fatal)[2] <- "Fatal Cases"
+count.fatal
+
+# Grouped by "Zip"
+fatal.zip <- CollisionsCleaned %>% select(Zip, Fatal) %>% filter(Fatal != "Non-Fatal")
+fatal.zip <- fatal.zip %>%  group_by(Zip) %>%  count(sort = T)
+colnames(fatal.zip)[2] <- "Fatal Cases"
+fatal.zip <- fatal.zip %>% filter(`Fatal Cases` >= 10)
+fatal.zip
+
+# Grouped by "ACCIDENT_YEAR"
+fatal.year <- CollisionsCleaned %>% select(ACCIDENT_YEAR, Fatal) %>% filter(Fatal != "Non-Fatal")
+fatal.year <- fatal.year %>%  group_by(ACCIDENT_YEAR) %>%  count(sort = F)
+colnames(fatal.year)[2] <- "Fatal Cases"
+fatal.year
+
+
+# Bar charts to visualize distributions
+# Grouped by "Zip"
+top6.zip <- c(94103,94112,94109,94124,94102,94116)
+fatal.zip.ggplot <- CollisionsCleaned %>% select(Zip, Fatal) %>% filter(Fatal != "Non-Fatal" & Zip %in% top6.zip)
+
+fatal.zip.ggplot %>% ggplot(aes(Fatal, fill = Fatal)) +
+    geom_bar() + 
+    facet_wrap(~ Zip, ncol = 6) +
+    labs(title ="Top 6 Zip Codes with Fatalities", x = "Zip", y = "# of Cases") +
+    theme(plot.title = element_text(hjust = .5),
+          legend.position = "none",
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank())
+
+
+# Grouped by "ACCIDENT_YEAR"
+fatal.year.ggplot <- CollisionsCleaned %>% select(ACCIDENT_YEAR, Fatal) %>% filter(Fatal != "Non-Fatal")
+
+fatal.year.ggplot %>% ggplot(aes(Fatal, fill = Fatal)) +
+    geom_bar() + 
+    facet_wrap(~ ACCIDENT_YEAR, ncol = 9) +
+    labs(title ="Fatal Cases since 2010", x = "Year", y = "# of Cases") +
+    theme(plot.title = element_text(hjust = .5),
+          legend.position = "none",
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank())
+```
+
+**Fatal vs Independent Variables**
+
+While I could have used cross-tables to compare the frequency of fatal and non-fatal cases in relation to the independent variables, the data would be easier to visually understand using heatmaps. 
+
+To understand the visuals, frequency is represented from least to most by the following color scale:
+*No count - gray color
+*Low count - light yellow
+*Medium count - orange
+*High count - dark red  
+
+As shown in each heatmap, we can see that fatal cases only represent a small number against the numerous non-fatal cases.
+
+```{r}
+# Heatmaps of independent variables against "Fatal"
+
+# Primary Collision Factor vs Fatal Cases
+PCF.fatal <- CollisionsCleaned %>% 
+  select(PCF_Violation, Fatal) %>% 
+  group_by(PCF_Violation, Fatal) %>% 
+  summarise(counts = n())
+
+ggplot(PCF.fatal, aes(PCF_Violation, Fatal)) +
+    geom_tile(aes(fill = counts), color = "white") +
+    scale_fill_gradient2(low = "lightblue", mid ="orange", high = "darkred", midpoint = 3000) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = .5)) +
+    labs(title ="Primary Collision Factor vs Fatal Cases", 
+             x = "Primary Collision Factor", 
+             y = "Fatal")
+  
+# Light Condition vs Fatal Cases
+light.fatal <- CollisionsCleaned %>% 
+  select(Light_Condition, Fatal) %>% 
+  group_by(Light_Condition, Fatal) %>% 
+  summarise(counts = n())
+
+ggplot(light.fatal, aes(Light_Condition, Fatal)) +
+    geom_tile(aes(fill = counts), color = "white") +
+    scale_fill_gradient2(low = "lightblue", mid ="orange", high = "darkred", midpoint = 5000) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = .5)) +
+    labs(title ="Light Condition vs Fatal Cases", 
+             x = "Light Condition", 
+             y = "Fatal")
+
+# Road Surface vs Fatal Cases
+road.fatal <- CollisionsCleaned %>% 
+  select(Road_Surface, Fatal) %>% 
+  group_by(Road_Surface, Fatal) %>% 
+  summarise(counts = n())
+  
+ggplot(road.fatal, aes(Road_Surface, Fatal)) +
+    geom_tile(aes(fill = counts), color = "white") +
+    scale_fill_gradient2(low = "lightblue", mid ="orange", high = "darkred", midpoint = 7500) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = .5)) +
+    labs(title ="Road Surface vs Fatal Cases", 
+             x = "Road Surface", 
+             y = "Fatal")
+
+# Pedestrian Action vs Fatal Cases
+ped.fatal <- CollisionsCleaned %>% 
+  select(Pedestrian_Action, Fatal) %>% 
+  group_by(Pedestrian_Action, Fatal) %>% 
+  summarise(counts = n())
+
+ggplot(ped.fatal, aes(Pedestrian_Action, Fatal)) +
+    geom_tile(aes(fill = counts), color = "white") +
+    scale_fill_gradient2(low = "lightblue", mid ="orange", high = "darkred", midpoint = 10000) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = .5)) +
+    labs(title ="Pedestrian Action vs Fatal Cases", 
+             x = "Pedestrian Action", 
+             y = "Fatal")
+
+# Intersection vs Fatal Cases
+inter.fatal <- CollisionsCleaned %>% 
+  select(INTERSECTION, Fatal) %>% 
+  group_by(INTERSECTION, Fatal) %>% 
+  summarise(counts = n())
+
+ggplot(inter.fatal, aes(INTERSECTION, Fatal)) +
+    geom_tile(aes(fill = counts), color = "white") +
+    scale_fill_gradient2(low = "lightblue", mid ="orange", high = "darkred", midpoint = 5000) +
+    theme(plot.title = element_text(hjust = .5)) +
+    labs(title ="Intersection vs Fatal Cases", 
+             x = "Intersection Action", 
+             y = "Fatal")
+
+# Collision Type vs Fatal Cases
+type.fatal <- CollisionsCleaned %>% 
+  select(Collision_Type, Fatal) %>% 
+  group_by(Collision_Type, Fatal) %>% 
+  summarise(counts = n())
+
+ggplot(type.fatal, aes(Collision_Type, Fatal)) +
+    geom_tile(aes(fill = counts), color = "white") +
+    scale_fill_gradient2(low = "lightblue", mid ="orange", high = "red", midpoint = 2500) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = .5)) +
+    labs(title ="Collision Type vs Fatal Cases", 
+             x = "Collision Type", 
+             y = "Fatal") 
+
+# Zip vs Fatal Cases
+CollisionsCleaned$Zip <- as.factor(CollisionsCleaned$Zip)
+
+zip.fatal <- CollisionsCleaned %>% 
+  select(Zip, Fatal) %>% 
+  group_by(Zip, Fatal) %>% 
+  summarise(counts = n())
+
+ggplot(zip.fatal, aes(Zip, Fatal)) +
+    geom_tile(aes(fill = counts), color = "white") +
+    scale_fill_gradient2(low = "lightblue", mid ="orange", high = "red", midpoint = 1000) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = .5)) +
+    labs(title ="Zip vs Fatal Cases", 
+             x = "Zip", 
+             y = "Fatal")
+```
