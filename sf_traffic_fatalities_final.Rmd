@@ -5,13 +5,14 @@ date: "March 14, 2019"
 output: html_document
 ---
 
-# The Traffic Problem
+# The Traffic Problem 
+Published: [link](http://rpubs.com/JYoung91/476312)
 
 I've grown up in San Francisco all my life. Observing how the city experienced a boom in tech, and in turn, a population boom, I see the latent consequences of such massive growth. The city was not intended to accommodate so many people. Issues include lack of affordable housing, widespread homelessness, and inadequate infrastructures. From a transportation standpoint, San Francisco is not the easiest to get around and is certainly not the safest.
 
 I understand the risks associated with operating a vehicle and commuting as a pedestrian in a busy metropolitan city. While there are many perceived reasons for traffic incidents, I wanted to take a data-driven approach in recognizing key predictors of fatalities. Namely, which variables are the leading causes traffic fatalities?   
 
-Within this Intro to Data Science, I hope to lay a foundation in equipping myself with the tools to better answer the question over time. My long-term  goal is to be part of the Zero Vision SF conversation in introducing data science as a viable tool to contribute in reducing traffic fatalities.
+Within this S Intro to Data Science at Springboard, I hope to lay a foundation in equipping myself with the tools to better answer the question over time. My long-term  goal is to be part of the Zero Vision SF conversation in introducing data science as a viable tool to contribute in reducing traffic fatalities.
 
 
 # Audience
@@ -23,19 +24,26 @@ While the information is to be simplified to be consumed by the general non-tech
 # Exploration
 
 In this documentation, I will be defining my methodology, findings, and recommendations based on my results in the following format:
-*Dataset
-*Variables
-*Data Wrangling
-*Charts and Visualizations
-*Machine Learning (Supervised Learning)
-*Limitations
-*Recommendations
+
+* Dataset
+
+* Variables
+
+* Data Wrangling
+
+* Charts and Visualizations
+
+* Machine Learning (Supervised Learning)
+
+* Limitations
+
+* Recommendations
 
 ---------------------------------------------------------------------------------------------------
 
 ## Data Set
 
-I tested a few data sets until I decided that the most suitable was from the **California Highway Patrol** in their **Statewide Integrated Traffic Records System (SWITRS)**. Not only did this data set include non-fatal cases but also allowed me to extract data from specific dates range. I chose from 2010 to 2017 to ensure that the sample size is large enough. From San Francisco's economic expansion since the last housing bubble in 2007 the date range felt appropriate. I named the data set as "Collisions".
+I tested a few data sets until I decided that the most suitable was from the **California Highway Patrol** in their **Statewide Integrated Traffic Records System (SWITRS)**. Not only did this data set include non-fatal cases but also allowed me to extract data from specific dates range. I chose from 2010 to 2017 to ensure that the sample size is large enough. From San Francisco’s economic expansion since the last housing bubble in 2007 the date range felt appropriate. I named the data set as “Collisions”.
 
 For every incident reported to authorities, a record exists in defining collision details, person(s) involved, and vehicle conditions as separate data sets for a full report of usable variables. I chose the collisions records as it included enough details for this analysis. The data set a had a total of 76 variables.
 
@@ -43,11 +51,12 @@ The data set names were mostly comprehensible upon initial inspection. Some vari
 
 For example:
 
-PCF_Violation -> Primary Collision Factor
+**PCF_Violation** -> Primary Collision Factor
 
-Road Surface
+**Road Surface**
+
 Raw Format  | Named Values
-------------|-------------
+------------|-------------------------------
 A           | Dry
 B           | Wet
 C           | Snowy or Icy
@@ -60,90 +69,145 @@ D           | Slippery (Muddy, Oil, etc.)
 
 ## Variables
 
-The dependent variable I will be observing is "Fatal". The categorical variable is defined by two levels, non-fatal or fatal. It indicates whether a fatality occurred in a given case. It is not, however, indicative of the number of deaths per case. 
+The dependent variable I will be observing is “Fatal”. The categorical variable is defined by two levels, non-fatal or fatal. It indicates whether a fatality occurred in a given case. It is not, however, indicative of the number of deaths per case. 
 
-The variable was created from the existing "Collision Severity" variable in the data set. It is defined by levels:
-*Property Damage
-*Injury (Minor)
-*Injury (Moderate)
-*Injury (Severe)
-*Fatal
+The variable was created from the existing “Collision Severity” variable in the data set. It is defined by levels:
 
-With exception to the predefined "Fatal" level, I consolidated all other levels to the "Non-Fatal" level:
-*Non-Fatal
-*Fatal
+* Property Damage
 
-In my formulation of determining independent variables that affect fatalities, I've chosen the following with their own set of levels. For each variable, a level was chosen as a baseline to build upon my logistic regression model. Some baselines were arbitrarily chosen as there were no natural baselines I could identify.
+* Injury (Minor)
+
+* Injury (Moderate)
+
+* Injury (Severe)
+
+* Fatal
+
+With exception to the predefined “Fatal” level, I consolidated all other levels to the “Non-Fatal” level:
+
+* Non-Fatal
+
+* Fatal
+
+In my formulation of determining independent variables that affect fatalities, I’ve chosen the following with their own set of levels. For each variable, a level was chosen as a baseline to build upon my logistic regression model. Some baselines were arbitrarily chosen as there were no natural baselines I could identify.
 
 **Primary Collision Factor or PCF Violation** - the main violation as cited by the CHP officer
-*Driving or Bicycling Under the Influence
-*Impeding Traffic
-*Unsafe Speed
-*Following Too Closely
-*Wrong Side of Road
-*Improper Passing
-*Unsafe Lane Change
-*Improper Turning
-*Automobile Right of Way
-*Pedestrian Right of Way
-*Pedestrian Violation
-*Traffic Signals and Signs
-*Hazardous Parking
-*Lights
-*Brakes
-*Other Equipment
-*Other Hazardous Violation
-*Other Than Driver (or Pedestrian)
-*Unsafe Starting or Backing
-*Other Improper Driving
-*Pedestrian or Other Under the Influence
-*Fell Asleep
+
+* Driving or Bicycling Under the Influence
+
+* Impeding Traffic
+
+* Unsafe Speed
+
+* Following Too Closely
+
+* Wrong Side of Road
+
+* Improper Passing
+
+* Unsafe Lane Change
+
+* Improper Turning
+
+* Automobile Right of Way
+
+* Pedestrian Right of Way
+
+* Pedestrian Violation
+
+* Traffic Signals and Signs
+
+* Hazardous Parking
+
+* Lights
+
+* Brakes
+
+* Other Equipment
+
+* Other Hazardous Violation
+
+* Other Than Driver (or Pedestrian)
+
+* Unsafe Starting or Backing
+
+* Other Improper Driving
+
+* Pedestrian or Other Under the Influence
+
+* Fell Asleep
 
 PCF spans numerous categories and not of an ordinal scale. However, I can identify levels that can be perceived as more influential on a fatality. I predict that variables that involve faster speeds and involvement of pedestrians have a higher likelihood of resulting in a fatality.
 
 **Lighting** - lighting conditions at the time of the incident
-*Daylight
-*Dusk - Dawn
-*Dark - Street Lights
-*Dark - No Street Lights
-*Dark - Street Lights Not Functioning
+
+* Daylight
+
+* Dusk - Dawn
+
+* Dark - Street Lights
+
+* Dark - No Street Lights
+
+* Dark - Street Lights Not Functioning
 
 I predict that incidents that occur in the night will have a greater role in fatalities as visibility is poorer in darker conditions. 
 
 **Road Surface** - road conditions at the time of the incident
-*Dry
-*Wet
-*Snowy or Icy
-*Slippery (Muddy, Oily, etc.)
 
-San Francisco is not known for having weather extremes. Rain comes occasionally most of the year as California is still considered in "drought" conditions. My prediction is that most fatalities will be in dry conditions.
+* Dry
+
+* Wet
+
+* Snowy or Icy
+
+* Slippery (Muddy, Oily, etc.)
+
+San Francisco is not known for having weather extremes. Rain comes occasionally most of the year as California is still considered in “drought” conditions. My prediction is that most fatalities will be in dry conditions.
 
 **Pedestrian Action** (if applicable) - actions of pedestrians at the time of the incident 
-*No Pedestrian Involved
-*Crossing in Crosswalk at Intersection
-*Crossing in Crosswalk Not at Intersection
-*Crossing Not in Crosswalk
-*In Road
-*Including Shoulder
-*Not in Road
-*Approaching/Leaving School Bus
+
+* No Pedestrian Involved
+
+* Crossing in Crosswalk at Intersection
+
+* Crossing in Crosswalk Not at Intersection
+
+* Crossing Not in Crosswalk
+
+* In Road
+
+* Including Shoulder
+
+* Not in Road
+
+* Approaching/Leaving School Bus
 
 My prediction for pedestrian involvement on fatality will be levels where pedestrians and/or vehicles are in violation in areas where there is a disparity in speed. The greater the speed of a vehicle against a stationary pedestrian, the deadlier the outcome.
 
 **Intersection** - whether the collision occurred in an intersection
-*No
-*Yes
+
+* No
+
+* Yes
 
 Intersections are areas where people should be more aware of their surroundings as they are to follow traffic lights and need to non-verbally communicate with others to show intent. Non-intersections typically have a flow where every person understands their direction and intent in most cases. Due to the possibility of miscommunication at intersections, I predict that more fatalities would happen there.
 
 **Type of Collision** - the manner in which the the vehicle struck either another car, person, object, etc.
-*Head-On
-*Sideswipe
-*Rear End
-*Broadside
-*Hit Object
-*Overturned
-*Vehicle/Pedestrian
+
+* Head-On
+
+* Sideswipe
+
+* Rear End
+
+* Broadside
+
+* Hit Object
+
+* Overturned
+
+* Vehicle/Pedestrian
 
 To reiterate speed disparity, collision types that involve differences in speed of two objects result in a more severe collision, and as a result, fatalities.
 
@@ -157,10 +221,15 @@ I also predict that collisions are location dependent, especially in more traffi
 # Data Wrangling
 
 The original data set was provided in a wide, unstacked format where each column is represented by a different variable. The majority of the data wrangling steps came in the form of using packages from the **Tidyverse (dplyr and tidyr)** to: 
+
 1. Remove unused variables
+
 2. Manipulating address variables to generate a separate dataset to geocode the data using a 3rd party vendor in extracting exact zip and coordinate data
-3. Create the "Fatal" variable from the existing "Collision_Severity" variable
+
+3. Create the “Fatal” variable from the existing “Collision_Severity” variable
+
 4. Recoding and labeling categorical independent variables
+
 5. Filtering unknown and insufficiently descriptive values
 
 
@@ -189,23 +258,25 @@ Collisions <- Collisions %>% select(1:2, # Case_ID, ACCIDENT_YEAR
 **2. Generating Zip Codes**
 
 This step required me to first export address data from the data set as a csv file in the following format:
-*Cross Street
-*City
-*State
+* Cross Street
+
+* City
+
+* State
 
 The csv is then imported into [link](https://www.geocod.io/), an online platform that takes various address formats to return zip and coordinate information. 
 
-The "PRIMARY_RD" and "SECONDARY_RD" variables were combined to form a cross street variable. "SAN FRANCISCO" and "CA" value are then assigned to a "CITY" and "STATE" variable respectively. The variables were added back into the the data set so that each row had its own city and state value. 
+The “PRIMARY_RD” and “SECONDARY_RD” variables were combined to form a cross street variable. “SAN FRANCISCO” and “CA” value are then assigned to a “CITY” and “STATE” variable respectively. The variables were added back into the the data set so that each row had its own city and state value. 
 
 The 3 address variables were then subsetted to be exported as the coordinates.csv, ready for coordinate extraction.
 
 Once the coordinate and zip data was extracted from geocod.io, I imported the processed coordinates_geocodio.csv and removing any unimportant variables.
 
-As I observed the data, I noticed that with 'Accuracy Score', each case returned a number between 0 and 1, which addresses the percent accuracy of the extracted coordinate data. I looked up individual cases at each accuracy score level and found that correct zip codes were correctly extracted on a consistent basis with score of 0.52.
+As I observed the data, I noticed that with ‘Accuracy Score’, each case returned a number between 0 and 1, which addresses the percent accuracy of the extracted coordinate data. I looked up individual cases at each accuracy score level and found that correct zip codes were correctly extracted on a consistent basis with score of 0.52.
 
 The incidents were not within San Francisco city limits. Therefore they were filtered out. 
 
-Once the data was cleaned, the coordinates_geocodio.csv file was combined with the main data set, matching by "CASE_ID" to ensure that the returned coordinate corresponds to the correct case. Any case that did not have accurate coordinate data resulted in NA data, which was dealt with by filtering.
+Once the data was cleaned, the coordinates_geocodio.csv file was combined with the main data set, matching by “CASE_ID” to ensure that the returned coordinate corresponds to the correct case. Any case that did not have accurate coordinate data resulted in NA data, which was dealt with by filtering.
 
 ```{r}
 # Build extraction dataframe
@@ -239,9 +310,9 @@ Collisions <- full_join(Collisions, coordinates_geocodio, by = "CASE_ID")
 Collisions <- Collisions %>% filter(!is.na(`Accuracy Score`))
 ```
 
-**3. Creating the "Fatal" variable**
+**3. Creating the “Fatal” variable**
 
-As explained when defining the "Fatal" variable, it was created from a copy of the "COLLISION_SEVERITY" variable, which levels are defined numerically. The copy was mutated, replacing the different non-fatal numeric levels of "Collision_Severity" to the value of "Non-Fatal". The numeric fatal level was replaced with "Fatal".
+As explained when defining the “Fatal” variable, it was created from a copy of the “COLLISION_SEVERITY” variable, which levels are defined numerically. The copy was mutated, replacing the different non-fatal numeric levels of “Collision_Severity” to the value of “Non-Fatal”. The numeric fatal level was replaced with “Fatal”.
 
 ```{r}
 # place PDO level inline with other non-fatal collision types
@@ -372,7 +443,7 @@ Collisions <- Collisions %>%
 
 **5. Filtering unknown and insufficiently descriptive values**
 
-Values of any independent variable described as "Not Stated", "Other", "Unknown", etc. were filtered from the data set. The results from the modeling would not be helpful in determining whether they contribute to an accident if they were not descriptive.
+Values of any independent variable described as “Not Stated”, “Other”, “Unknown”, etc. were filtered from the data set. The results from the modeling would not be helpful in determining whether they contribute to an accident if they were not descriptive.
 
 I renamed the data set as CollisionsCleaned, indicating that the data set has been cleaned.
 
@@ -394,7 +465,7 @@ CollisionsCleaned <- Collisions %>% filter(Collision_Type != "Not Stated" &
 
 Export cleaned sheet
 ```{r}
-write.table(CollisionsCleaned, "CollisionsCleaned.csv", row.names = FALSE, sep = ",")
+#write.table(CollisionsCleaned, "CollisionsCleaned.csv", row.names = FALSE, sep = ",")
 ```
 
 ---------------------------------------------------------------------------------------------------
@@ -404,8 +475,10 @@ write.table(CollisionsCleaned, "CollisionsCleaned.csv", row.names = FALSE, sep =
 With the cleaned data set, I wanted to know more about the fatal cases and how the independent variables related visually by way of frequency.
 
 I did this by creating:
-*Frequency tables & bar plots
-*Heatmaps 
+
+* Frequency tables & bar plots
+
+* Heatmaps 
 
 Simple distribution tables with supporting bar charts were created to observe the counts of fatalities vs non-fatalities. When grouping Year and Zip, non-fatal data was filtered out.
 
@@ -433,7 +506,7 @@ Year  | Fatal Cases
 2017  |    14
 2018  |    8
 
-The table comparing years shows that the city is on track to reduce fatalities as of 2018. However, we must keep in mind that 31,360 of the original 40,021 unique cases remain after the data wrangling phase, which may have removed numerous fatal cases recorded. 207 cases were removed from the geocoding step. An additional 7,828 records were removed as a result of values from independant variable being "Not Stated", "Other", "Unknown".
+The table comparing years shows that the city is on track to reduce fatalities as of 2018. However, we must keep in mind that 31,360 of the original 40,021 unique cases remain after the data wrangling phase, which may have removed numerous fatal cases recorded. 207 cases were removed from the geocoding step. An additional 7,828 records were removed as a result of values from independant variable being “Not Stated”, “Other”, “Unknown”.
 
 
 **Fatal Cases by Zip (Top 6)**
@@ -508,10 +581,14 @@ fatal.year.ggplot %>% ggplot(aes(Fatal, fill = Fatal)) +
 While I could have used cross-tables to compare the frequency of fatal and non-fatal cases in relation to the independent variables, the data would be easier to visually understand using heatmaps. 
 
 To understand the visuals, frequency is represented from least to most by the following color scale:
-*No count - gray color
-*Low count - light yellow
-*Medium count - orange
-*High count - dark red  
+
+* No count - gray color
+
+* Low count - light yellow
+
+* Medium count - orange
+
+* High count - dark red  
 
 As shown in each heatmap, we can see that fatal cases only represent a small number against the numerous non-fatal cases.
 
@@ -629,7 +706,7 @@ ggplot(zip.fatal, aes(Zip, Fatal)) +
 
 # Machine Learning
 
-Now I wanted to make predictions on how the chosen independent variables affect "Fatal"" outcomes. Because "Fatal" is a binary categorical variable, I chose to use a **binary logistic regression model**.
+Now I wanted to make predictions on how the chosen independent variables affect "Fatal"" outcomes. Because “Fatal” is a binary categorical variable, I chose to use a **binary logistic regression model**.
 
 **Cross Validation**
 
@@ -651,13 +728,11 @@ The model accurately predicted 2 actual fatal and 29,864 non-fatal outcomes.
 
 However, it incorrectly predicted 174 fatal outcomes as non-fatal. This is not a good model. A lower threshold value would be needed to make more accurate predictions.
 
-----------------------------------------
-                      |     Actual
-----------------------------------------
-          |           | Fatal | Non-Fatal
-----------|-----------------------------
-Predicted | Fatal     |   2   |      8 
-          | Non-Fatal | 174   | 29,864 
+Matrix    |       |   Actual
+----------|-------|------------
+Predicted | Fatal | Non-Fatal
+Fatal     |   2   |      8 
+Non-Fatal | 174   | 29,864 
 
 
 **Coefficients**
@@ -674,11 +749,16 @@ Due to the nature LOOCV cross validation being time and processing intensive (at
 The model proved to be to very challenging use at this stage of learning data science. However, it did show information that makes sense. The most useful independent variable that influences fatal outcomes is Primary Collision Factor (PCF). 
 
 The specific outcomes that increase the odds of fatalities are:
-*Driving or Bicycling Under the Influence (99.5% confidence level)
-*Hazardous Parking  (93.9%)
-*Traffic Signals and Signs (99.7%)
-*Unsafe Speed (98.9%)
-*Wrong Side of Road (96.3%)
+
+* Driving or Bicycling Under the Influence (99.5% confidence level)
+
+* Hazardous Parking  (93.9%)
+
+* Traffic Signals and Signs (99.7%)
+
+* Unsafe Speed (98.9%)
+
+* Wrong Side of Road (96.3%)
 
 The results do acknowledge my predictions on speed disparity between collision objects as influential to fatalities. Though the lack of pedestrian specific predictors are concerning considering that fatal collisions involving pedestrians typically outnumber bicycle and car only collisions year over year. **(City & County of SF, City Performance Scorecards)** [link](https://sfgov.org/scorecards/transportation/traffic-fatalities)
 
@@ -758,27 +838,27 @@ dim(dataSet)
 set.seed(50)
 
 # Perform LOOCV to establish a measure of prediction error
-predictionsCV <- list()
-cutOff <- seq(.05, .15, .01) # cutoff at .1, 
-for (co in length(cutOff)) {
+#predictionsCV <- list()
+#cutOff <- seq(.05, .15, .01) # cutoff at .1, 
+#for (co in length(cutOff)) {
   # - report
-  print(paste0("-- Current cutOff value: ", cutOff))
-  predictions <- numeric()
-  for (i in 1:dim(dataSet)[1]) {
+#  print(paste0("-- Current cutOff value: ", cutOff))
+#  predictions <- numeric()
+#  for (i in 1:dim(dataSet)[1]) {
     # - report
-    print(paste0("-- Current CV run: ", i, "/", dim(dataSet)[1]))
-    dataPoint <- dataSet[i, ]
-    dSet <- dataSet[-i, ]
+#    print(paste0("-- Current CV run: ", i, "/", dim(dataSet)[1]))
+#    dataPoint <- dataSet[i, ]
+#    dSet <- dataSet[-i, ]
     m <- glm(Fatal ~ .,
              data = dataSet,
              family = binomial(link = "logit"))
-    p <- predict(m, dataPoint, type = "response")
-    if (p < cutOff[co]) {
-      predictions[i] <- 'Non-Fatal'
-    } else {predictions[i] <- 'Fatal'}
-  }
-  predictionsCV[[co]] <- predictions
-}
+#    p <- predict(m, dataPoint, type = "response")
+#    if (p < cutOff[co]) {
+#      predictions[i] <- 'Non-Fatal'
+#    } else {predictions[i] <- 'Fatal'}
+#  }
+#  predictionsCV[[co]] <- predictions
+#}
 
 # Results:
 # First 10 cutoff parameters resulted in NULL
@@ -786,15 +866,15 @@ for (co in length(cutOff)) {
 # Cutoff11 at t = 0.15 remains
 
 # the remaining cutoff is saved as a vector to join with modeled dataframe 
-cutOff11v <- as.vector(predictionsCV[[11]])
-dataSet <- dataSet %>% add_column(cutOff11v, .after = "Fatal")
+#cutOff11v <- as.vector(predictionsCV[[11]])
+#dataSet <- dataSet %>% add_column(cutOff11v, .after = "Fatal")
 
 # Confusion Matrix
-table(Predicted = dataSet$cutOff11v, Actual = dataSet$Fatal)
-conf.matrix
+#conf.matrix <- table(Predicted = dataSet$cutOff11v, Actual = dataSet$Fatal)
+#conf.matrix
 2/(2+174) # sensitivity = 0.01136364
 29864/(29864+8) # specificity = 0.9997322
-1 - sum(diag(conf.matrix))/sum(conf.matrix)
+#1 - sum(diag(conf.matrix))/sum(conf.matrix)
 # Our classification error is 0.99%
 
 # Where is the good fit?
@@ -805,6 +885,7 @@ ROCRperf <- performance(ROCRpred, "tpr", "fpr")
 plot(ROCRperf, colorize=T, print.cutoffs.at=seq(0,1,0.1), text.adj=c(-2,.1))
 # The curve shows us that anything over 0.2 for a threshold value would exponentially introduce false positives
 # labeling 70% false positives - predicted to be non-fatal but actually fatal
+# from the LOOCV test, it must be less than 0.1
 
 #####################################################################################################
 
@@ -855,33 +936,33 @@ ggsave("plot.png", width = 20, height = 10)
 
 ## Recommendations
 
-*Driving or Bicycling Under the Influence should always be scrutinized by local government and law enforcement. Steps should always be taken to reduce reckless behavior around alcohol.
+* Driving or Bicycling Under the Influence should always be scrutinized by local government and law enforcement. Steps should always be taken to reduce reckless behavior around alcohol.
 
-*No parking and parking restriction signs should be made visible to reduce incidents from Hazardous Parking in areas where vehicles are at speed. 
+* No parking and parking restriction signs should be made visible to reduce incidents from Hazardous Parking in areas where vehicles are at speed. 
 
-*San Francisco can be a very distracting and busy place to drive. Traffic Signals and Signs should be very clear to drivers so that they can adjust their driving accordingly.
+* San Francisco can be a very distracting and busy place to drive. Traffic Signals and Signs should be very clear to drivers so that they can adjust their driving accordingly.
 
-*Unsafe Speed kills. Reduced limits, law enforcement, or speed limiters like roundabouts, speed bumps, speedtraps can mitigate more high speed collisions.
+* Unsafe Speed kills. Reduced limits, law enforcement, or speed limiters like roundabouts, speed bumps, speedtraps can mitigate more high speed collisions.
 
-*Paint in dividers where vehicles can easily go on the Wrong Side of the Road. Narrow roads in SF are a given but having clear indicator of two-way traffic can help.
+* Paint in dividers where vehicles can easily go on the Wrong Side of the Road. Narrow roads in SF are a given but having clear indicator of two-way traffic can help.
 
 
 ---------------------------------------------------------------------------------------------------
 
 ## Limitations
 
-* "The number of annual fatalities is subject to year-to-year fluctuations and a high degree of random variation, limiting the ability to draw statistically meaningful trends on an annual basis." **(City & County of San Francisco, City Performance Scorecards)** [link](https://sfgov.org/scorecards/transportation/traffic-fatalities)
+* “The number of annual fatalities is subject to year-to-year fluctuations and a high degree of random variation, limiting the ability to draw statistically meaningful trends on an annual basis.” **(City & County of San Francisco, City Performance Scorecards)** [link](https://sfgov.org/scorecards/transportation/traffic-fatalities)
 
 * Lack of Zip code data. Cross streets data to extract zip codes using a mapping API tool geocod.io. With the accuracy scores between 0 and 1 for each record, I needed to manually cross reference geocoded zip codes with the provided cross streets. 207 cases were removed as a result.
 
-* The omission of speed at which the incident occurred. As reported by the National Highway Traffic Safety Administration, "speeding has been involved in approximately one-third of all motor vehicle fatalities." **(NHTSA)** [link](https://sfgov.org/scorecards/transportation/traffic-fatalities) The absence of such an important determining factor is a significant limitation.
+* The omission of speed at which the incident occurred. As reported by the National Highway Traffic Safety Administration, “speeding has been involved in approximately one-third of all motor vehicle fatalities.” **(NHTSA)** [link](https://sfgov.org/scorecards/transportation/traffic-fatalities) The absence of such an important determining factor is a significant limitation.
 
-* Removal of "Unknown", "Not Stated", and any other insufficiently descriptive values. They accounted for 20% of the original dataset. This meant that for fatal cases that contained any those values, were removed from the dataset.
+* Removal of “Unknown”, “Not Stated”, and any other insufficiently descriptive values. They accounted for 20% of the original dataset. This meant that for fatal cases that contained any those values, were removed from the dataset.
 
 * The models had to be cleared from perfect separation. This is a common condition that occurs when the data set is too small to observe events with low probabilities. The more predictors are in the model, the more likely separation is to occur because the individual groups in the data have smaller sample sizes. 2,145 records were removed as a result.
 
-*The use of a LOOCV cross validation method was extremely time consuming to determine a proper threshold value. It took upwards to half a day.
+* The use of a LOOCV cross validation method was extremely time consuming to determine a proper threshold value. It took upwards to half a day.
 
-* The consolidation of the "Collision_Severity" variable to "Fatal" is a huge limiting factor in the sense that important features are lost as a result, oversimplifying a complex problem. Traffic fatalities only make up a small part of the overall collision problem that can help us, in turn, better understand fatalities. This project can be expanded upon using a multinomial logistic regression model.
+* The consolidation of the “Collision_Severity” variable to “Fatal” is a huge limiting factor in the sense that important features are lost as a result, oversimplifying a complex problem. Traffic fatalities only make up a small part of the overall collision problem that can help us, in turn, better understand fatalities. This project can be expanded upon using a multinomial logistic regression model.
 
 
