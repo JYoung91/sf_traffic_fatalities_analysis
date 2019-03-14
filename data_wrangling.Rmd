@@ -1,0 +1,249 @@
+---
+title: "sf_traffic_fatalities_data_wrangling"
+author: "Jeremie Young"
+date: "March 14, 2019"
+output: html_document
+---
+
+# Data Wrangling
+
+The original data set was provided in a wide, unstacked format where each column is represented by a different variable. The majority of the data wrangling steps came in the form of using packages from the **Tidyverse (dplyr and tidyr)** to: 
+1. Remove unused variables
+2. Manipulating address variables to generate a separate dataset to geocode the data using a 3rd party vendor in extracting exact zip and coordinate data
+3. Create the “Fatal” variable from the existing “Collision_Severity” variable
+4. Recoding and labeling categorical independent variables
+5. Filtering unknown and insufficiently descriptive values
+
+
+**1. Removing unused variables**
+
+The original dataset began with a total of 76 variables, which I reduced to 22 variables. The cleaning process began with subsetting and retaining used variables. Using the corresponding appendix with variable names, I selected the columns to retain using the column number values.
+
+```{r}
+# Load original "CollisionRecords2010_2018" dataset as CSV file
+library(readr)
+library(dplyr)
+library(tidyr)
+Collisions <- read_csv("CollisionRecords2010_2018.txt")
+
+# Subset dataframe by retaining used variables
+Collisions <- Collisions %>% select(1:2, # Case_ID, ACCIDENT_YEAR
+                                    19:20, # PRIMARY_ROAD, SECONDARY_ROAD
+                                    23:24, # INTERSECTION, WEATHER_1
+                                    37, # COLLISION_SEVERITY
+                                    43, # PCF_VIOL_CATEGORY
+                                    47, # TYPE_OF_COLLISION
+                                    49:50, #PED_ACTION, ROAD_SURFACE
+                                    53) # LIGHTING
+```
+
+**2. Generating Zip Codes**
+
+This step required me to first export address data from the data set as a csv file in the following format:
+*Cross Street
+*City
+*State
+
+The csv is then imported into [link](https://www.geocod.io/), an online platform that takes various address formats to return zip and coordinate information. 
+
+The “PRIMARY_RD” and “SECONDARY_RD” variables were combined to form a cross street variable. “SAN FRANCISCO” and “CA” value are then assigned to a “CITY” and “STATE” variable respectively. The variables were added back into the the data set so that each row had its own city and state value. 
+
+The 3 address variables were then subsetted to be exported as the coordinates.csv, ready for coordinate extraction.
+
+Once the coordinate and zip data was extracted from geocod.io, I imported the processed coordinates_geocodio.csv and removing any unimportant variables.
+
+As I observed the data, I noticed that with ‘Accuracy Score’, each case returned a number between 0 and 1, which addresses the percent accuracy of the extracted coordinate data. I looked up individual cases at each accuracy score level and found that correct zip codes were correctly extracted on a consistent basis with score of 0.52.
+
+The incidents were not within San Francisco city limits. Therefore they were filtered out. 
+
+Once the data was cleaned, the coordinates_geocodio.csv file was combined with the main data set, matching by “CASE_ID” to ensure that the returned coordinate corresponds to the correct case. Any case that did not have accurate coordinate data resulted in NA data, which was dealt with by filtering.
+
+```{r}
+# Build extraction dataframe
+Collisions <- Collisions %>% 
+              unite(CROSS_ST, PRIMARY_RD, SECONDARY_RD, sep = " & ")
+library(tibble)
+CITY <- "SAN FRANCISCO"
+STATE <- "CA"
+Collisions <- Collisions %>% add_column(CITY, STATE, .after = "CROSS_ST")
+
+# Export for extraction
+# coordinates <- Collisions %>%  select(CASE_ID, CROSS_ST:STATE)
+# write.table(coordinates, "coordinates.csv", row.names = FALSE, sep = ",")
+
+# Import extracted data from Geocodio
+coordinates_geocodio <- read_csv("coordinates_geocodio.csv")
+
+# Remove undeliverable records that resulted in missing data (0 for coordinates & accurancy), coordinate accuracy level of less than .52, and incorrect geocoding to San Mateo County
+coordinates_geocodio <- coordinates_geocodio %>% filter(`Accuracy Score` != 0 & 
+                                                        `Accuracy Score` >= .52 & 
+                                                        County != "San Mateo County")
+
+# Retained useful variables
+coordinates_geocodio <- coordinates_geocodio %>% select(CASE_ID, 
+                                                        `Accuracy Score`,
+                                                        Zip)
+
+# Join into original dataset and remove N/A records
+Collisions <- full_join(Collisions, coordinates_geocodio, by = "CASE_ID")
+
+Collisions <- Collisions %>% filter(!is.na(`Accuracy Score`))
+```
+
+**3. Creating the “Fatal” variable**
+
+As explained when defining the “Fatal” variable, it was created from a copy of the “COLLISION_SEVERITY” variable, which levels are defined numerically. The copy was mutated, replacing the different non-fatal numeric levels of “Collision_Severity” to the value of “Non-Fatal”. The numeric fatal level was replaced with “Fatal”.
+
+```{r}
+# place PDO level inline with other non-fatal collision types
+Collisions <- Collisions %>% mutate(COLLISION_SEVERITY = replace(COLLISION_SEVERITY, COLLISION_SEVERITY == 0, 5)) 
+
+# Create labels for COLLISION_SEVERITY and join into main data set
+COLLISION_SEVERITY <- c(1, 2, 3, 4, 5)
+Collision_Severity <- c("Fatal", 
+                        "Injury (Severe)", 
+                        "Injury (Moderate)", 
+                        "Injury (Minor)", 
+                        "Property Damage Only")
+Collision_Severity_Labels <- data.frame(COLLISION_SEVERITY, Collision_Severity)
+
+Collisions <- Collisions %>% left_join(Collision_Severity_Labels, by = "COLLISION_SEVERITY")
+
+# Create Fatal/Non-Fatal column, consolidate non-fatal collisions
+Collisions$Fatal <- Collisions$COLLISION_SEVERITY
+
+Collisions <- Collisions %>% mutate(
+    Fatal = replace(Fatal, Fatal == 1, "Fatal"),
+    Fatal = replace(Fatal, Fatal == 2, "Non-Fatal"),
+    Fatal = replace(Fatal, Fatal == 3, "Non-Fatal"),
+    Fatal = replace(Fatal, Fatal == 4, "Non-Fatal"),
+    Fatal = replace(Fatal, Fatal == 5, "Non-Fatal"))
+
+# level factor of COLLISION_SEVERITY and labels  
+Collisions$COLLISION_SEVERITY <- factor(Collisions$COLLISION_SEVERITY, 
+                                        levels = c(5, 4, 3, 2, 1))
+
+Collisions$Collision_Severity <- factor(Collisions$Collision_Severity, 
+                                        levels = c("Property Damage Only", 
+                                                   "Injury (Minor)", 
+                                                   "Injury (Moderate)", 
+                                                   "Injury (Severe)", 
+                                                   "Fatal"))
+
+Collisions$Fatal <- factor(Collisions$Fatal, 
+                           levels = c("Non-Fatal", 
+                                      "Fatal"))
+```
+
+**4. Recoding and labeling categorical values (independent variables)**  
+
+Since all categorical variable values are defined either numerically and alphabetically, I needed to create labels for the independent variables I needed to use for my visualizations and models.
+
+I used the included appendix and coded each label to its corresponding value. This was done by creating dataframes for the desired independent variables. The dataframe consisted of a vector with the numeric or alphabetical values and a corresponding column with the labels.
+
+Once created, the label dataframes were joined with the main data set according to the independent variable values so that each collision record has all the correct labels.
+
+```{r}
+# Correspond independent variable values with labels from appendix
+PCF_VIOL_CATEGORY <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "22", "23", "24", "00", "-")
+PCF_Violation <- c("Driving or Bicycling Under the Influence", 
+                   "Impeding Traffic", 
+                   "Unsafe Speed", 
+                   "Following Too Closely", 
+                   "Wrong Side of Road", 
+                   "Improper Passing", 
+                   "Unsafe Lane Change", 
+                   "Improper Turning", 
+                   "Automobile Right of Way", 
+                   "Pedestrian Right of Way", 
+                   "Pedestrian Violation", 
+                   "Traffic Signals and Signs", 
+                   "Hazardous Parking", 
+                   "Lights", 
+                   "Brakes", 
+                   "Other Equipment", 
+                   "Other Hazardous Violation", 
+                   "Other Than Driver (or Pedestrian)", 
+                   "Unsafe Starting or Backing", 
+                   "Other Improper Driving", 
+                   "Pedestrian or Other Under the Influence", 
+                   "Fell Asleep", 
+                   "Unknown", 
+                   "Not Stated")
+PCF_Violation_Labels <- data.frame(PCF_VIOL_CATEGORY, PCF_Violation)
+
+LIGHTING <- c("A", "B", "C", "D", "E", "-")
+Light_Condition <- c("Daylight", 
+                     "Dusk - Dawn", 
+                     "Dark - Street Lights", 
+                     "Dark - No Street Lights", 
+                     "Dark - Street Lights Not Functioning", 
+                     "Not Stated")
+Lighting_Labels <- data.frame(LIGHTING, Light_Condition)
+
+ROAD_SURFACE <- c("A", "B", "C", "D", "-")
+Road_Surface <- c("Dry", 
+                  "Wet", 
+                  "Snowy or Icy", 
+                  "Slippery (Muddy, Oily, etc.)", 
+                  "Not Stated")
+Road_Surface_Labels <- data.frame(ROAD_SURFACE, Road_Surface)
+
+PED_ACTION <- c("A", "B", "C", "D", "E", "F", "G", "-")
+Pedestrian_Action <- c("No Pedestrian Involved", 
+                       "Crossing in Crosswalk at Intersection", 
+                       "Crossing in Crosswalk Not at Intersection", 
+                       "Crossing Not in Crosswalk", 
+                       "In Road, Including Shoulder", 
+                       "Not in Road", 
+                       "Approaching/Leaving School Bus", 
+                       "Not Stated")
+Pedestrian_Action_Labels <- data.frame(PED_ACTION, Pedestrian_Action)
+
+TYPE_OF_COLLISION <- c("A", "B", "C", "D", "E", "F", "G", "H", "-")
+Collision_Type <- c("Head-On", 
+                    "Sideswipe", 
+                    "Rear End", 
+                    "Broadside", 
+                    "Hit Object", 
+                    "Overturned", 
+                    "Vehicle/Pedestrian", 
+                    "Other", 
+                    "Not Stated")
+Collision_Type_Labels <- data.frame(TYPE_OF_COLLISION, Collision_Type)
+
+# left join labels into main dataframe
+Collisions <- Collisions %>%  
+                      left_join(PCF_Violation_Labels, by = "PCF_VIOL_CATEGORY") %>% 
+                      left_join(Lighting_Labels, by = "LIGHTING") %>% 
+                      left_join(Road_Surface_Labels, by = "ROAD_SURFACE") %>% 
+                      left_join(Pedestrian_Action_Labels, by = "PED_ACTION") %>% 
+                      left_join(Collision_Type_Labels, by = "TYPE_OF_COLLISION")
+```
+
+**5. Filtering unknown and insufficiently descriptive values**
+
+Values of any independent variable described as “Not Stated”, “Other”, “Unknown”, etc. were filtered from the data set. The results from the modeling would not be helpful in determining whether they contribute to an accident if they were not descriptive.
+
+I renamed the data set as CollisionsCleaned, indicating that the data set has been cleaned.
+
+```{r}
+# Filter out unknown values
+CollisionsCleaned <- Collisions %>% filter(Collision_Type != "Not Stated" & 
+                                    Collision_Type != "Other" &
+                                    PCF_Violation != "Not Stated" &
+                                    PCF_Violation != "Unknown" &
+                                    PCF_Violation != "Other Equipment" & 
+                                    PCF_Violation != "Other Than Driver (or Pedestrian)" & 
+                                    PCF_Violation != "Other Hazardous Violation" & 
+                                    PCF_Violation != "Other Improper Driving" &  
+                                    Light_Condition != "Not Stated" &
+                                    Pedestrian_Action != "Not Stated" &
+                                    INTERSECTION != "-" &
+                                    Road_Surface != "Not Stated")
+```
+
+Export cleaned sheet
+```{r}
+write.table(CollisionsCleaned, "CollisionsCleaned.csv", row.names = FALSE, sep = ",")
+```
