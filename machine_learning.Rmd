@@ -1,0 +1,230 @@
+---
+title: "traffic_collisions_sf_machine_learning"
+author: "Jeremie Young"
+date: "March 14, 2019"
+output: html_document
+---
+
+# Machine Learning
+
+Now I wanted to make predictions on how the chosen independent variables affect "Fatal"" outcomes. Because “Fatal” is a binary categorical variable, I chose to use a **binary logistic regression model**.
+
+**Cross Validation**
+
+Since the dataset contains so few fatal cases, the initial means of hold-out cross validation caused underfitting with the model. It was only when the threshold value t = 0.1, where actual fatalities were predicted correctly. This meant that the model can fail to capture the underlying trend of the data.
+
+To ensure a lower bias, I chose to use the leave one out cross validation (LOOCV) method instead, making use of every data point. This method removes only one data point from the dataset, and trains the model on the rest of the data. This process iterates n times where 
+n = 30,048 (total # of unique data points). 
+
+**Threshold Value**
+
+The initial LOOCV run iterating on threshold values were set at seq(0.1, 0.9, 0.1), meaning from 0.1 to 0.9 by an increment of 0.1. The model only predicts any Fatal outcomes at t = 0.1.
+
+Once it was determined that the general location of the threshold value t = 0.1, another pass was done at seq(.05, .15, .01). The first 10 passes resulted in NULL while the final pass at predicted Fatal outcomes at t = 0.15.
+
+
+**Confusion Matrix**
+
+The model accurately predicted 2 actual fatal and 29,864 non-fatal outcomes. 
+
+However, it incorrectly predicted 174 fatal outcomes as non-fatal. This is not a good model. A lower threshold value would be needed to make more accurate predictions.
+
+----------------------------------------
+                      |     Actual
+----------------------------------------
+          |           | Fatal | Non-Fatal
+----------|-----------------------------
+Predicted | Fatal     |   2   |      8 
+          | Non-Fatal | 174   | 29,864 
+
+
+**Coefficients**
+
+The coefficients are shown on a plot generated using ggplot2. The colored bars represent the coefficient estimates. The longer the bar, odds of a fatal outcome increases.
+
+The numbers above the bars represent the p-values. A smaller value is more statistical significance through a higher confidence level where (1-p)*100%
+
+
+**Results**
+
+Due to the nature LOOCV cross validation being time and processing intensive (at least 12 hours), no additional tests were done. A lower threshold value would have to be tested. 
+
+The model proved to be to very challenging use at this stage of learning data science. However, it did show information that makes sense. The most useful independent variable that influences fatal outcomes is Primary Collision Factor (PCF). 
+
+The specific outcomes that increase the odds of fatalities are:
+*Driving or Bicycling Under the Influence (99.5% confidence level)
+*Hazardous Parking  (93.9%)
+*Traffic Signals and Signs (99.7%)
+*Unsafe Speed (98.9%)
+*Wrong Side of Road (96.3%)
+
+The results do acknowledge my predictions on speed disparity between collision objects as influential to fatalities. Though the lack of pedestrian specific predictors are concerning considering that fatal collisions involving pedestrians typically outnumber bicycle and car only collisions year over year. **(City & County of SF, City Performance Scorecards)** [link](https://sfgov.org/scorecards/transportation/traffic-fatalities)
+
+```{r}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+
+dataSet <- read.csv("C:/Users/jerem/Desktop/Capstone/CollisionsCleaned.csv")
+glimpse(dataSet)
+# Select the variables for modeling
+dataSet <- select(dataSet, 
+                  PCF_Violation, Light_Condition, Road_Surface, 
+                  Pedestrian_Action, INTERSECTION, Collision_Type, Zip, Fatal)
+
+# Inspect variables
+str(dataSet)
+lapply(dataSet, class) 
+# If variables are characters, ensure that they are converted into factors
+
+# Inspect variables one by one
+table(dataSet$PCF_Violation) # - Ok
+table(dataSet$Light_Condition) # - Ok
+table(dataSet$Road_Surface) # - Ok
+table(dataSet$Pedestrian_Action) # - Ok
+table(dataSet$INTERSECTION) # - Ok
+table(dataSet$Collision_Type) # - Ok
+table(dataSet$Zip) # - Ok
+
+# Ensure that only complete cases are used for the model
+dim(dataSet) # 31986 observations
+# Check if there are missing values - keep only complete observations
+dataSet <- dataSet[complete.cases(dataSet), ]
+dim(dataSet) # 31986 observations - so, there were no missing values
+
+# Introduce factors with baseline levels selected
+dataSet$PCF_Violation <- factor(dataSet$PCF_Violation)
+dataSet$PCF_Violation <- relevel(dataSet$PCF_Violation, ref = 'Brakes')
+dataSet$Light_Condition <- factor(dataSet$Light_Condition)
+dataSet$Light_Condition <- relevel(dataSet$Light_Condition, ref = 'Dark - Street Lights Not Functioning')
+dataSet$Road_Surface <- factor(dataSet$Road_Surface)
+dataSet$Road_Surface <- relevel(dataSet$Road_Surface, ref = 'Snowy or Icy')
+dataSet$Pedestrian_Action <- factor(dataSet$Pedestrian_Action)
+dataSet$Pedestrian_Action <- relevel(dataSet$Pedestrian_Action, ref = 'Not in Road')
+dataSet$INTERSECTION <- factor(dataSet$INTERSECTION)
+dataSet$INTERSECTION <- relevel(dataSet$INTERSECTION, ref = 'N')
+dataSet$Collision_Type <- factor(dataSet$Collision_Type)
+dataSet$Collision_Type <- relevel(dataSet$Collision_Type, ref = 'Overturned')
+dataSet$Zip <- factor(dataSet$Zip)
+dataSet$Zip <- relevel(dataSet$Zip, ref = '94129')
+dataSet$Fatal <- factor(dataSet$Fatal,
+                        levels = c('Non-Fatal', 'Fatal'))
+
+# Clear data to avoid perfect separation
+crosstabs <- lapply(select(dataSet, -Fatal), function(x) {
+  tab <- as.data.frame(table(x, dataSet$Fatal))
+  tab <- filter(tab, tab$Freq == 0)
+  tab <- unique(as.character(tab$x))
+})
+for (i in 1:length(crosstabs)) {
+  for (j in 1:length(dataSet[, i])) {
+    if (dataSet[j, i] %in% crosstabs[[i]]) {
+      dataSet[j, i] <- NA
+    }
+  }
+}
+dim(dataSet)
+dataSet <- dataSet[complete.cases(dataSet), ]
+dim(dataSet)
+# With binary logistic models, we proceed to clear the data from perfect separation. This is a common condition that occurs when the data set is too small to observe events with low probabilities. The more predictors are in the model, the more likely separation is to occur because the individual groups in the data have smaller sample sizes.
+
+
+# Build logistic Regression Model
+
+# set seed to ensure same sample split
+set.seed(50)
+
+# Perform LOOCV to establish a measure of prediction error
+predictionsCV <- list()
+cutOff <- seq(.05, .15, .01) # cutoff at .1, 
+for (co in length(cutOff)) {
+  # - report
+  print(paste0("-- Current cutOff value: ", cutOff))
+  predictions <- numeric()
+  for (i in 1:dim(dataSet)[1]) {
+    # - report
+    print(paste0("-- Current CV run: ", i, "/", dim(dataSet)[1]))
+    dataPoint <- dataSet[i, ]
+    dSet <- dataSet[-i, ]
+    m <- glm(Fatal ~ .,
+             data = dataSet,
+             family = binomial(link = "logit"))
+    p <- predict(m, dataPoint, type = "response")
+    if (p < cutOff[co]) {
+      predictions[i] <- 'Non-Fatal'
+    } else {predictions[i] <- 'Fatal'}
+  }
+  predictionsCV[[co]] <- predictions
+}
+
+# Results:
+# First 10 cutoff parameters resulted in NULL
+# prediction error = 8.370715e-05%
+# Cutoff11 at t = 0.15 remains
+
+# the remaining cutoff is saved as a vector to join with modeled dataframe 
+cutOff11v <- as.vector(predictionsCV[[11]])
+dataSet <- dataSet %>% add_column(cutOff11v, .after = "Fatal")
+
+# Confusion Matrix
+table(Predicted = dataSet$cutOff11v, Actual = dataSet$Fatal)
+conf.matrix
+2/(2+174) # sensitivity = 0.01136364
+29864/(29864+8) # specificity = 0.9997322
+1 - sum(diag(conf.matrix))/sum(conf.matrix)
+# Our classification error is 0.99%
+
+# Where is the good fit?
+p1 <- predict(m, dataSet, type = 'response')
+library(ROCR)
+ROCRpred <- prediction(p1, dataSet$Fatal)
+ROCRperf <- performance(ROCRpred, "tpr", "fpr")
+plot(ROCRperf, colorize=T, print.cutoffs.at=seq(0,1,0.1), text.adj=c(-2,.1))
+# The curve shows us that anything over 0.2 for a threshold value would exponentially introduce false positives
+# labeling 70% false positives - predicted to be non-fatal but actually fatal
+
+#####################################################################################################
+
+# Model Coefficients
+summary(m)
+
+# Plot Coefficients
+
+modelCoefs <- as.data.frame(summary(m)$coefficients)
+modelCoefs$Estimate <- exp(modelCoefs$Estimate)
+modelCoefs$Effect <- rownames(modelCoefs)
+modelTerms <- c('PCF_Violation', 'Pedestrian_Action', 'Collision_Type', 
+                'INTERSECTION', 'Road_Surface', 'Light_Condition', "Zip", 'Intercept')
+modelCoefs$Factor <- sapply(modelCoefs$Effect, function(x) {
+  modelTerms[which(sapply(modelTerms, function(y) {grepl(y, x)}))]
+})
+modelCoefs$Effect <- sapply(modelCoefs$Effect, function(x) {
+  gsub(modelTerms[which(sapply(modelTerms, function(y) {grepl(y, x)}))], "", x)
+})
+# - Visualize and inspect the model
+# - remove Intercept
+plotFrame <- filter(modelCoefs, Factor != 'Intercept')
+# - plotFrame$Effect as factor - important for ordering the labels
+plotFrame$Effect <- factor(plotFrame$Effect, 
+                           levels = plotFrame$Effect[order(plotFrame$Effect)])
+# - visualize w. {ggplot2}
+ggplot(plotFrame, aes(x = Effect, 
+                      y = Estimate, 
+                      group = Factor,
+                      color = Factor,
+                      fill = Factor, 
+                      label = round(plotFrame$`Pr(>|z|)`, 3))) + 
+  geom_bar(stat = 'identity', width = .1) + 
+  geom_text_repel(color = 'black', size = 3.5) + 
+  facet_wrap(. ~ Factor, ncol = 2) + 
+  ylab('exp(Coefficient)') + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, 
+                                   size = 8, 
+                                   hjust = 0.95, 
+                                   vjust = 0.2))
+
+ggsave("plot.png", width = 20, height = 10)
+
+```
