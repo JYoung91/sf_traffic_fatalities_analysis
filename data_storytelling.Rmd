@@ -1,0 +1,155 @@
+---
+title: "traffic_collision_sf_data_storytelling"
+author: "Jeremie Young"
+date: "March 14, 2019"
+output: html_document
+---
+
+# The Traffic Problem
+
+I've grown up in San Francisco all my life. Observing how the city experienced a boom in tech, and in turn, a population boom, I see the latent consequences of such massive growth. The city was not intended to accommodate so many people. Issues include lack of affordable housing, widespread homelessness, and inadequate infrastructures. From a transportation standpoint, San Francisco is not the easiest to get around and is certainly not the safest.
+
+I understand the risks associated with operating a vehicle and commuting as a pedestrian in a busy metropolitan city. While there are many perceived reasons for traffic incidents, I wanted to take a data-driven approach in recognizing key predictors of fatalities. Namely, which variables are the leading causes traffic fatalities?   
+
+Within this Intro to Data Science, I hope to lay a foundation in equipping myself with the tools to better answer the question over time. My long-term  goal is to be part of the Zero Vision SF conversation in introducing data science as a viable tool to contribute in reducing traffic fatalities.
+
+
+# Audience
+
+My ultimate, long-term target audience are supporters of the **Vision Zero SF** initiative [link](https://www.visionzerosf.org/), which is comprised of city officials, city employees and community members. The road safety policy, mandated by the late Mayor Ed Lee, vows to reduce traffic fatalities to 0 by 2024. My goal is to be part of the conversation in introducing data science as a viable tool to include into their **Action Strategy** [link](https://www.visionzerosf.org/about/action-strategy/).
+
+While the information is to be simplified to be consumed by the general non-technical vast majority of the audience. The conversation is to started with members of **San Francisco Department of Public Health (SFDPH)**, who use the same CHP data set and use SQL to generate maps that pertain to traffic fatalities.
+
+# Exploration
+
+In this documentation, I will be defining my methodology, findings, and recommendations based on my results in the following format:
+*Dataset
+*Variables
+*Data Wrangling
+*Charts and Visualizations
+*Machine Learning (Supervised Learning)
+*Limitations
+*Recommendations
+
+---------------------------------------------------------------------------------------------------
+
+## Data Set
+
+I tested a few data sets until I decided that the most suitable was from the **California Highway Patrol** in their **Statewide Integrated Traffic Records System (SWITRS)**. Not only did this data set include non-fatal cases but also allowed me to extract data from specific dates range. I chose from 2010 to 2017 to ensure that the sample size is large enough. From San Francisco’s economic expansion since the last housing bubble in 2007 the date range felt appropriate. I named the data set as “Collisions”.
+
+For every incident reported to authorities, a record exists in defining collision details, person(s) involved, and vehicle conditions as separate data sets for a full report of usable variables. I chose the collisions records as it included enough details for this analysis. The data set a had a total of 76 variables.
+
+The data set names were mostly comprehensible upon initial inspection. Some variables, however, were abbreviated and/or acronymized. Those variables could be understood with an included appendix that detailed the full name of the variables as well the letter or number coded values. The variable names were recorded if necessary.
+
+For example:
+
+PCF_Violation -> Primary Collision Factor
+
+Road Surface
+Raw Format  | Named Values
+------------|-------------
+A           | Dry
+B           | Wet
+C           | Snowy or Icy
+D           | Slippery (Muddy, Oil, etc.)
+-           | Not Stated
+
+*The data set and appendix can be accessed through the CHP's Statewide Integrated Traffic Records System (SWITRS) website. An account must be created.*
+
+---------------------------------------------------------------------------------------------------
+
+## Variables
+
+The dependent variable I will be observing is “Fatal”. The categorical variable is defined by two levels, non-fatal or fatal. It indicates whether a fatality occurred in a given case. It is not, however, indicative of the number of deaths per case. 
+
+The variable was created from the existing “Collision Severity” variable in the data set. It is defined by levels:
+*Property Damage
+*Injury (Minor)
+*Injury (Moderate)
+*Injury (Severe)
+*Fatal
+
+With exception to the predefined “Fatal” level, I consolidated all other levels to the “Non-Fatal” level:
+*Non-Fatal
+*Fatal
+
+In my formulation of determining independent variables that affect fatalities, I’ve chosen the following with their own set of levels. For each variable, a level was chosen as a baseline to build upon my logistic regression model. Some baselines were arbitrarily chosen as there were no natural baselines I could identify.
+
+**Primary Collision Factor or PCF Violation** - the main violation as cited by the CHP officer
+*Driving or Bicycling Under the Influence
+*Impeding Traffic
+*Unsafe Speed
+*Following Too Closely
+*Wrong Side of Road
+*Improper Passing
+*Unsafe Lane Change
+*Improper Turning
+*Automobile Right of Way
+*Pedestrian Right of Way
+*Pedestrian Violation
+*Traffic Signals and Signs
+*Hazardous Parking
+*Lights
+*Brakes
+*Other Equipment
+*Other Hazardous Violation
+*Other Than Driver (or Pedestrian)
+*Unsafe Starting or Backing
+*Other Improper Driving
+*Pedestrian or Other Under the Influence
+*Fell Asleep
+
+PCF spans numerous categories and not of an ordinal scale. However, I can identify levels that can be perceived as more influential on a fatality. I predict that variables that involve faster speeds and involvement of pedestrians have a higher likelihood of resulting in a fatality.
+
+**Lighting** - lighting conditions at the time of the incident
+*Daylight
+*Dusk - Dawn
+*Dark - Street Lights
+*Dark - No Street Lights
+*Dark - Street Lights Not Functioning
+
+I predict that incidents that occur in the night will have a greater role in fatalities as visibility is poorer in darker conditions. 
+
+**Road Surface** - road conditions at the time of the incident
+*Dry
+*Wet
+*Snowy or Icy
+*Slippery (Muddy, Oily, etc.)
+
+San Francisco is not known for having weather extremes. Rain comes occasionally most of the year as California is still considered in “drought” conditions. My prediction is that most fatalities will be in dry conditions.
+
+**Pedestrian Action** (if applicable) - actions of pedestrians at the time of the incident 
+*No Pedestrian Involved
+*Crossing in Crosswalk at Intersection
+*Crossing in Crosswalk Not at Intersection
+*Crossing Not in Crosswalk
+*In Road
+*Including Shoulder
+*Not in Road
+*Approaching/Leaving School Bus
+
+My prediction for pedestrian involvement on fatality will be levels where pedestrians and/or vehicles are in violation in areas where there is a disparity in speed. The greater the speed of a vehicle against a stationary pedestrian, the deadlier the outcome.
+
+**Intersection** - whether the collision occurred in an intersection
+*No
+*Yes
+
+Intersections are areas where people should be more aware of their surroundings as they are to follow traffic lights and need to non-verbally communicate with others to show intent. Non-intersections typically have a flow where every person understands their direction and intent in most cases. Due to the possibility of miscommunication at intersections, I predict that more fatalities would happen there.
+
+**Type of Collision** - the manner in which the the vehicle struck either another car, person, object, etc.
+*Head-On
+*Sideswipe
+*Rear End
+*Broadside
+*Hit Object
+*Overturned
+*Vehicle/Pedestrian
+
+To reiterate speed disparity, collision types that involve differences in speed of two objects result in a more severe collision, and as a result, fatalities.
+
+**Zip** - 25 unique postal codes in the city
+
+I also predict that collisions are location dependent, especially in more traffic-heavy areas that are not residential.
+
+
+
