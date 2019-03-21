@@ -230,5 +230,6 @@ ggplot(zip.fatal, aes(Zip, Fatal)) +
     labs(title ="Zip vs Fatal Cases", 
              x = "Zip", 
              y = "Fatal")
+library(rmarkdown)
 render("stats_analysis.Rmd", html_document(toc = TRUE))
 ```
