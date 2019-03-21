@@ -2,7 +2,7 @@
 title: "Traffic Collision Statistical Analysis"
 author: "Jeremie Young"
 date: "March 14, 2019"
-output: html_document
+output: rmarkdown::github_document
 ---
 
 # Statistical Analysis
